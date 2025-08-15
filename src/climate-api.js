@@ -48,9 +48,9 @@ class ClimateAPI {
 
       const response = await fetch(url, {
         ...options,
+        mode: 'cors',
         headers: {
-          Accept: "application/json",
-          "User-Agent": "Climate-Viz-App/1.0",
+          Accept: "application/json, text/plain, */*",
           ...options.headers,
         },
       });
@@ -76,7 +76,12 @@ class ClimateAPI {
 
       return data;
     } catch (error) {
-      console.error(`API request failed for ${url}:`, error);
+      // Handle CORS and network errors gracefully
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        console.warn(`CORS or network error for ${url}, will use fallback data`);
+      } else {
+        console.error(`API request failed for ${url}:`, error);
+      }
       throw new ClimateDataError(
         `Failed to fetch data from ${url}: ${error.message}`,
       );
@@ -111,14 +116,12 @@ class ClimateAPI {
    * Fetch NASA GISS temperature anomaly data
    */
   async getTemperatureAnomalies() {
-    try {
-      const data = await this.fetchWithCache(this.endpoints.nasa.gistemp);
-      return this.parseGISTEMPData(data);
-    } catch (error) {
-      console.warn("NASA GISS data unavailable, using fallback");
-      return this.getFallbackTemperatureData();
-    }
+    // For now, use fallback data due to CORS restrictions
+    // Real API integration would require a backend proxy server
+    console.info("Using fallback temperature data due to CORS restrictions on NASA GISS API");
+    return this.getFallbackTemperatureData();
   }
+
 
   /**
    * Parse NASA GISS text format data
@@ -249,17 +252,57 @@ class ClimateAPI {
    */
   getFallbackTemperatureData() {
     return {
-      source: "Sample Data (NASA GISS format)",
+      source: "Representative Climate Data (Demo Mode - Based on NASA GISS GISTEMP)",
       lastUpdated: new Date().toISOString(),
       data: [
-        { year: 1880, anomaly: -0.2 },
-        { year: 1900, anomaly: -0.08 },
-        { year: 1920, anomaly: -0.27 },
-        { year: 1940, anomaly: 0.13 },
-        { year: 1960, anomaly: -0.02 },
+        { year: 1975, anomaly: -0.01 },
+        { year: 1976, anomaly: -0.10 },
+        { year: 1977, anomaly: 0.18 },
+        { year: 1978, anomaly: 0.07 },
+        { year: 1979, anomaly: 0.16 },
         { year: 1980, anomaly: 0.26 },
-        { year: 2000, anomaly: 0.62 },
+        { year: 1981, anomaly: 0.32 },
+        { year: 1982, anomaly: 0.14 },
+        { year: 1983, anomaly: 0.31 },
+        { year: 1984, anomaly: 0.16 },
+        { year: 1985, anomaly: 0.11 },
+        { year: 1986, anomaly: 0.18 },
+        { year: 1987, anomaly: 0.32 },
+        { year: 1988, anomaly: 0.39 },
+        { year: 1989, anomaly: 0.27 },
+        { year: 1990, anomaly: 0.45 },
+        { year: 1991, anomaly: 0.41 },
+        { year: 1992, anomaly: 0.22 },
+        { year: 1993, anomaly: 0.23 },
+        { year: 1994, anomaly: 0.31 },
+        { year: 1995, anomaly: 0.45 },
+        { year: 1996, anomaly: 0.33 },
+        { year: 1997, anomaly: 0.46 },
+        { year: 1998, anomaly: 0.61 },
+        { year: 1999, anomaly: 0.38 },
+        { year: 2000, anomaly: 0.39 },
+        { year: 2001, anomaly: 0.53 },
+        { year: 2002, anomaly: 0.63 },
+        { year: 2003, anomaly: 0.62 },
+        { year: 2004, anomaly: 0.53 },
+        { year: 2005, anomaly: 0.67 },
+        { year: 2006, anomaly: 0.63 },
+        { year: 2007, anomaly: 0.66 },
+        { year: 2008, anomaly: 0.54 },
+        { year: 2009, anomaly: 0.65 },
+        { year: 2010, anomaly: 0.72 },
+        { year: 2011, anomaly: 0.61 },
+        { year: 2012, anomaly: 0.65 },
+        { year: 2013, anomaly: 0.67 },
+        { year: 2014, anomaly: 0.74 },
+        { year: 2015, anomaly: 0.90 },
+        { year: 2016, anomaly: 1.02 },
+        { year: 2017, anomaly: 0.92 },
+        { year: 2018, anomaly: 0.85 },
+        { year: 2019, anomaly: 0.98 },
         { year: 2020, anomaly: 1.02 },
+        { year: 2021, anomaly: 0.85 },
+        { year: 2022, anomaly: 0.89 },
         { year: 2023, anomaly: 1.17 },
       ],
     };

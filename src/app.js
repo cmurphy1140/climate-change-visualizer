@@ -248,11 +248,7 @@ class ClimateViz {
       this.updateTemperatureInfo({ ...temperatureData, data: filteredData });
     } catch (error) {
       console.error("Temperature chart error:", error);
-      this.showError(
-        "temperatureChart",
-        "Failed to load temperature data. Using fallback data.",
-      );
-      // Fallback to sample data
+      // Use fallback chart directly
       this.createFallbackTemperatureChart();
     }
   }
