@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Climate Change Impact Visualizer - Modern UI</title>
+    <link rel="stylesheet" href="src/css/ui-modern.css" />
+    <link rel="stylesheet" href="src/css/styles.css" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Leaflet -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- ApexCharts for modern visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  </head>
+  <body>
+    <div class="modern-layout">
+      <!-- Modern Header -->
+      <header class="modern-header">
+        <div class="logo-section">
+          <button id="menuToggle" class="icon-button" aria-label="Toggle Menu">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="logo-icon">🌍</div>
+          <h1 class="logo-text">Climate Impact Visualizer</h1>
+        </div>
+        <div class="header-actions">
+          <div class="theme-toggle" id="themeToggle" aria-label="Toggle Theme">
+            <div class="theme-toggle-slider">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"
+                />
+              </svg>
+            </div>
+          </div>
+          <button
+            class="icon-button"
+            id="notificationBtn"
+            aria-label="Notifications"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </button>
+          <button class="icon-button" id="settingsBtn" aria-label="Settings">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 1.54l4.24 4.24M20.46 20.46l-4.24-4.24M1.54 20.46l4.24-4.24"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Modern Sidebar Navigation -->
+      <nav class="modern-sidebar" id="sidebar" role="navigation">
+        <div class="nav-section">
+          <h3 class="nav-section-title">Climate Data</h3>
+          <button class="nav-item active" data-section="dashboard" tabindex="0">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Dashboard</span>
+          </button>
+          <button class="nav-item" data-section="temperature" tabindex="0">
+            <span class="nav-icon">🌡️</span>
+            <span class="nav-label">Temperature</span>
+          </button>
+          <button class="nav-item" data-section="sea-level" tabindex="0">
+            <span class="nav-icon">🌊</span>
+            <span class="nav-label">Sea Level</span>
+          </button>
+          <button class="nav-item" data-section="emissions" tabindex="0">
+            <span class="nav-icon">💨</span>
+            <span class="nav-label">Emissions</span>
+          </button>
+          <button class="nav-item" data-section="extreme-events" tabindex="0">
+            <span class="nav-icon">⚡</span>
+            <span class="nav-label">Extreme Events</span>
+          </button>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Visualizations</h3>
+          <button class="nav-item" data-section="heatmap" tabindex="0">
+            <span class="nav-icon">🗺️</span>
+            <span class="nav-label">Global Heatmap</span>
+          </button>
+          <button class="nav-item" data-section="globe" tabindex="0">
+            <span class="nav-icon">🌐</span>
+            <span class="nav-label">3D Globe</span>
+          </button>
+          <button class="nav-item" data-section="projections" tabindex="0">
+            <span class="nav-icon">📈</span>
+            <span class="nav-label">Future Projections</span>
+          </button>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Tools</h3>
+          <button
+            class="nav-item"
+            data-section="carbon-calculator"
+            tabindex="0"
+          >
+            <span class="nav-icon">🧮</span>
+            <span class="nav-label">Carbon Calculator</span>
+          </button>
+          <button class="nav-item" data-section="comparison-tools" tabindex="0">
+            <span class="nav-icon">⚖️</span>
+            <span class="nav-label">Compare Regions</span>
+          </button>
+          <button
+            class="nav-item"
+            data-section="impact-assessment"
+            tabindex="0"
+          >
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Impact Assessment</span>
+          </button>
+          <button class="nav-item" data-section="data-export" tabindex="0">
+            <span class="nav-icon">💾</span>
+            <span class="nav-label">Export Data</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- Main Content Area -->
+      <main class="modern-main" id="mainContent">
+        <!-- Dashboard Section (Default) -->
+        <section id="dashboard" class="visualization-section active fade-in">
+          <div class="visualization-header">
+            <h2 class="visualization-title">Climate Dashboard</h2>
+            <div class="visualization-controls">
+              <select class="control-button" id="timeRange">
+                <option value="week">Last Week</option>
+                <option value="month">Last Month</option>
+                <option value="year" selected>Last Year</option>
+                <option value="decade">Last Decade</option>
+              </select>
+              <button class="control-button" id="refreshData">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"
+                  />
+                </svg>
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          <!-- Dashboard Grid -->
+          <div class="dashboard-grid">
+            <!-- Temperature Card -->
+            <div class="dashboard-card slide-in">
+              <div class="card-header">
+                <h3 class="card-title">Global Temperature</h3>
+                <span class="card-badge pulse">Live</span>
+              </div>
+              <div class="card-metric">+1.2°C</div>
+              <p class="card-description">Above pre-industrial average</p>
+              <div class="card-chart" id="tempMiniChart"></div>
+            </div>
+
+            <!-- Sea Level Card -->
+            <div class="dashboard-card slide-in" style="animation-delay: 0.1s">
+              <div class="card-header">
+                <h3 class="card-title">Sea Level Rise</h3>
+                <span class="card-badge">Monthly</span>
+              </div>
+              <div class="card-metric">+98mm</div>
+              <p class="card-description">Since 1993 satellite records</p>
+              <div class="card-chart" id="seaMiniChart"></div>
+            </div>
+
+            <!-- CO2 Card -->
+            <div class="dashboard-card slide-in" style="animation-delay: 0.2s">
+              <div class="card-header">
+                <h3 class="card-title">CO₂ Concentration</h3>
+                <span class="card-badge pulse">Live</span>
+              </div>
+              <div class="card-metric">421 ppm</div>
+              <p class="card-description">Current atmospheric CO₂</p>
+              <div class="card-chart" id="co2MiniChart"></div>
+            </div>
+
+            <!-- Arctic Ice Card -->
+            <div class="dashboard-card slide-in" style="animation-delay: 0.3s">
+              <div class="card-header">
+                <h3 class="card-title">Arctic Ice</h3>
+                <span class="card-badge">Annual</span>
+              </div>
+              <div class="card-metric">-13%</div>
+              <p class="card-description">Per decade decline rate</p>
+              <div class="card-chart" id="iceMiniChart"></div>
+            </div>
+
+            <!-- Extreme Events Card -->
+            <div class="dashboard-card slide-in" style="animation-delay: 0.4s">
+              <div class="card-header">
+                <h3 class="card-title">Extreme Events</h3>
+                <span class="card-badge">2024</span>
+              </div>
+              <div class="card-metric">327</div>
+              <p class="card-description">Recorded this year</p>
+              <div class="card-chart" id="eventsMiniChart"></div>
+            </div>
+
+            <!-- Emissions Card -->
+            <div class="dashboard-card slide-in" style="animation-delay: 0.5s">
+              <div class="card-header">
+                <h3 class="card-title">Global Emissions</h3>
+                <span class="card-badge">2023</span>
+              </div>
+              <div class="card-metric">36.8 Gt</div>
+              <p class="card-description">CO₂ emissions annually</p>
+              <div class="card-chart" id="emissionsMiniChart"></div>
+            </div>
+          </div>
+
+          <!-- Full Width Visualization -->
+          <div class="visualization-container">
+            <div class="visualization-header">
+              <h3 class="visualization-title">Global Climate Trends</h3>
+              <div class="visualization-controls">
+                <button class="control-button active" data-chart="temperature">
+                  Temperature
+                </button>
+                <button class="control-button" data-chart="precipitation">
+                  Precipitation
+                </button>
+                <button class="control-button" data-chart="disasters">
+                  Disasters
+                </button>
+              </div>
+            </div>
+            <div class="card-chart" style="height: 400px">
+              <canvas id="mainDashboardChart"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Temperature Section -->
+        <section id="temperature" class="visualization-section">
+          <div class="visualization-container">
+            <h2 class="visualization-title">Global Temperature Anomalies</h2>
+            <div class="card-chart" style="height: 400px">
+              <canvas id="temperatureChart"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sea Level Section -->
+        <section id="sea-level" class="visualization-section">
+          <div class="visualization-container">
+            <h2 class="visualization-title">Sea Level Rise</h2>
+            <div class="card-chart" style="height: 400px">
+              <canvas id="seaLevelChart"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Other sections will be loaded dynamically -->
+        <div id="dynamicSections"></div>
+      </main>
+
+      <!-- Floating Action Button -->
+      <div class="fab-container">
+        <button class="fab" id="fabButton" aria-label="Quick Actions">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12 5v14m-7-7h14"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="src/climate-api.js"></script>
+    <script src="src/app.js"></script>
+    <script src="src/advanced-features.js"></script>
+    <script src="src/user-tools.js"></script>
+    <script src="src/ui-modern.js"></script>
+  </body>
+</html>
