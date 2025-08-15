@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate Change Impact Visualizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Climate Change Impact Visualizer</h1>
+        <nav>
+            <button class="nav-btn active" data-section="temperature">Temperature</button>
+            <button class="nav-btn" data-section="sea-level">Sea Level</button>
+            <button class="nav-btn" data-section="emissions">Emissions</button>
+            <button class="nav-btn" data-section="extreme-events">Extreme Events</button>
+            <button class="nav-btn" data-section="heatmap">Global Heatmap</button>
+            <button class="nav-btn" data-section="globe">3D Globe</button>
+            <button class="nav-btn" data-section="projections">Future Projections</button>
+            <button class="nav-btn" data-section="carbon-calculator">Carbon Calculator</button>
+            <button class="nav-btn" data-section="data-export">Export Data</button>
+            <button class="nav-btn" data-section="comparison-tools">Compare Regions</button>
+            <button class="nav-btn" data-section="impact-assessment">Impact Assessment</button>
+        </nav>
+        <div class="controls-panel">
+            <div class="timeline-control">
+                <label for="yearRange">Time Range:</label>
+                <input type="range" id="yearStart" min="1880" max="2023" value="1880" class="year-slider">
+                <span id="yearStartLabel">1880</span>
+                <span>to</span>
+                <input type="range" id="yearEnd" min="1880" max="2023" value="2023" class="year-slider">
+                <span id="yearEndLabel">2023</span>
+            </div>
+            <div class="location-control">
+                <label for="locationSelect">Location:</label>
+                <select id="locationSelect" class="location-dropdown">
+                    <option value="global">Global</option>
+                    <option value="arctic">Arctic</option>
+                    <option value="north-america">North America</option>
+                    <option value="europe">Europe</option>
+                    <option value="asia">Asia</option>
+                    <option value="africa">Africa</option>
+                    <option value="south-america">South America</option>
+                    <option value="oceania">Oceania</option>
+                </select>
+            </div>
+            <button id="settingsBtn" class="settings-btn">⚙️ Settings</button>
+        </div>
+    </header>
+
+    <main>
+        <section id="temperature" class="visualization-section active">
+            <h2>Global Temperature Anomalies</h2>
+            <div class="chart-container">
+                <canvas id="temperatureChart"></canvas>
+            </div>
+            <div class="info-panel">
+                <p>Global temperature has risen by approximately 1.1°C since pre-industrial times.</p>
+            </div>
+        </section>
+
+        <section id="sea-level" class="visualization-section">
+            <h2>Sea Level Rise</h2>
+            <div class="chart-container">
+                <canvas id="seaLevelChart"></canvas>
+            </div>
+            <div class="map-container">
+                <div id="seaLevelMap"></div>
+            </div>
+        </section>
+
+        <section id="emissions" class="visualization-section">
+            <h2>CO₂ Emissions by Country</h2>
+            <div class="chart-container">
+                <div id="emissionsChart"></div>
+            </div>
+        </section>
+
+        <section id="extreme-events" class="visualization-section">
+            <h2>Extreme Weather Events</h2>
+            <div class="chart-container">
+                <canvas id="eventsChart"></canvas>
+            </div>
+        </section>
+
+        <section id="heatmap" class="visualization-section">
+            <h2>Global Temperature Heatmap</h2>
+            <div class="heatmap-controls">
+                <button id="playBtn" class="control-btn">▶️ Play Animation</button>
+                <input type="range" id="animationSpeed" min="1" max="10" value="5" class="speed-slider">
+                <label>Speed</label>
+            </div>
+            <div class="chart-container">
+                <div id="heatmapChart"></div>
+            </div>
+            <div class="info-panel">
+                <p id="heatmapInfo">Global temperature anomalies visualized as an animated heatmap.</p>
+            </div>
+        </section>
+
+        <section id="globe" class="visualization-section">
+            <h2>Interactive 3D Climate Globe</h2>
+            <div class="globe-controls">
+                <button class="control-btn" id="playButton">Play</button>
+                <button class="control-btn" id="pauseButton">Pause</button>
+                <button class="control-btn" data-layer="temperature">Temperature</button>
+                <button class="control-btn" data-layer="precipitation">Precipitation</button>
+                <button class="control-btn" data-layer="sea-level">Sea Level</button>
+                <button class="control-btn" data-layer="emissions">Emissions</button>
+            </div>
+            <div class="chart-container">
+                <div id="globeContainer"></div>
+            </div>
+            <div class="info-panel">
+                <p id="globeInfo">Interactive 3D visualization of global climate data. Drag to rotate, scroll to zoom.</p>
+            </div>
+        </section>
+
+        <section id="projections" class="visualization-section">
+            <h2>Future Climate Projections</h2>
+            <div class="projection-controls">
+                <label for="scenarioSelect">Scenario:</label>
+                <select id="scenarioSelect" class="scenario-dropdown">
+                    <option value="rcp26">RCP 2.6 (Paris Agreement)</option>
+                    <option value="rcp45">RCP 4.5 (Moderate)</option>
+                    <option value="rcp60">RCP 6.0 (High)</option>
+                    <option value="rcp85">RCP 8.5 (Business as Usual)</option>
+                </select>
+                <label for="projectionYear">Target Year:</label>
+                <select id="projectionYear" class="year-dropdown">
+                    <option value="2030">2030</option>
+                    <option value="2050">2050</option>
+                    <option value="2070">2070</option>
+                    <option value="2100">2100</option>
+                </select>
+            </div>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <canvas id="tempProjectionChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="seaLevelProjectionChart"></canvas>
+                </div>
+            </div>
+            <div class="info-panel">
+                <p id="projectionInfo">Climate projections based on IPCC scenarios and current emission trends.</p>
+            </div>
+        </section>
+
+        <!-- Phase 4-6: User Tools Sections -->
+        <section id="carbon-calculator" class="visualization-section">
+            <h2>Carbon Footprint Calculator</h2>
+            <div id="carbonCalculatorContainer">
+                <div class="calculator-form">
+                    <div class="form-group">
+                        <label for="electricity">Monthly Electricity (kWh):</label>
+                        <input type="number" id="electricity" min="0" placeholder="300">
+                    </div>
+                    <div class="form-group">
+                        <label for="milesDriven">Miles Driven Monthly:</label>
+                        <input type="number" id="milesDriven" min="0" placeholder="500">
+                    </div>
+                    <div class="form-group">
+                        <label for="gasUsage">Natural Gas (therms):</label>
+                        <input type="number" id="gasUsage" min="0" placeholder="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="flights">Flights per Year:</label>
+                        <input type="number" id="flights" min="0" placeholder="2">
+                    </div>
+                    <button id="calculateBtn" class="control-btn">Calculate Carbon Footprint</button>
+                    <div id="carbonResult" class="result-panel" style="display: none;">
+                        <h3>Your Carbon Footprint</h3>
+                        <p class="result-value">0 tons CO2/year</p>
+                        <div class="error-message" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="data-export" class="visualization-section">
+            <h2>Export Climate Data</h2>
+            <div id="dataExportContainer">
+                <div class="export-controls">
+                    <h3>Select Data to Export</h3>
+                    <div class="export-options">
+                        <label><input type="checkbox" name="exportData" value="temperature"> Temperature Data</label>
+                        <label><input type="checkbox" name="exportData" value="sealevel"> Sea Level Data</label>
+                        <label><input type="checkbox" name="exportData" value="emissions"> Emissions Data</label>
+                        <label><input type="checkbox" name="exportData" value="events"> Extreme Events</label>
+                    </div>
+                    <div class="export-buttons">
+                        <button id="exportCSV" class="control-btn">Export as CSV</button>
+                        <button id="exportJSON" class="control-btn">Export as JSON</button>
+                        <button id="exportPNG" class="control-btn">Export Chart as PNG</button>
+                        <button id="exportPDF" class="control-btn">Generate PDF Report</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison-tools" class="visualization-section">
+            <h2>Regional Climate Comparison</h2>
+            <div id="comparisonToolsContainer">
+                <div class="comparison-controls">
+                    <div class="region-selectors">
+                        <div class="form-group">
+                            <label for="regionA">Region A:</label>
+                            <select id="regionA" class="location-dropdown">
+                                <option value="north-america">North America</option>
+                                <option value="europe">Europe</option>
+                                <option value="asia">Asia</option>
+                                <option value="africa">Africa</option>
+                                <option value="south-america">South America</option>
+                                <option value="oceania">Oceania</option>
+                                <option value="arctic">Arctic</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="regionB">Region B:</label>
+                            <select id="regionB" class="location-dropdown">
+                                <option value="europe">Europe</option>
+                                <option value="north-america">North America</option>
+                                <option value="asia">Asia</option>
+                                <option value="africa">Africa</option>
+                                <option value="south-america">South America</option>
+                                <option value="oceania">Oceania</option>
+                                <option value="arctic">Arctic</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="compareBtn" class="control-btn">Compare Regions</button>
+                    <div class="comparison-chart" style="display: none;">
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="impact-assessment" class="visualization-section">
+            <h2>Climate Impact Assessment</h2>
+            <div id="impactAssessmentContainer">
+                <div class="assessment-wizard">
+                    <div class="wizard-steps">
+                        <div class="step active">1. Location</div>
+                        <div class="step">2. Sector</div>
+                        <div class="step">3. Timeline</div>
+                        <div class="step">4. Results</div>
+                    </div>
+                    <div class="wizard-content">
+                        <div class="step-content" id="step1">
+                            <label for="assessmentLocation">Select Your Location:</label>
+                            <input type="text" id="assessmentLocation" placeholder="Enter city or region">
+                        </div>
+                        <div class="wizard-buttons">
+                            <button id="prevStep" class="control-btn" disabled>Previous</button>
+                            <button id="nextStep" class="control-btn">Next</button>
+                            <button id="assessBtn" class="control-btn" style="display: none;">Generate Assessment</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Visualization Settings</h3>
+                <div class="settings-group">
+                    <label>
+                        <input type="checkbox" id="showDataPoints" checked>
+                        Show data points on charts
+                    </label>
+                    <label>
+                        <input type="checkbox" id="smoothLines" checked>
+                        Smooth trend lines
+                    </label>
+                    <label>
+                        <input type="checkbox" id="showProjections" checked>
+                        Show future projections
+                    </label>
+                </div>
+                <div class="settings-group">
+                    <label for="colorScheme">Color Scheme:</label>
+                    <select id="colorScheme">
+                        <option value="default">Default</option>
+                        <option value="colorblind">Colorblind Friendly</option>
+                        <option value="high-contrast">High Contrast</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label for="animationDuration">Animation Duration (ms):</label>
+                    <input type="range" id="animationDuration" min="500" max="3000" value="1000">
+                    <span id="durationValue">1000ms</span>
+                </div>
+                <button id="resetSettings" class="control-btn">Reset to Defaults</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Data sources: NASA, NOAA, IPCC</p>
+    </footer>
+
+    <script src="climate-api.js"></script>
+    <script src="advanced-features.js"></script>
+    <script src="user-tools.js"></script>
+    <script src="test-handlers.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
