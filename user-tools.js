@@ -4,37 +4,37 @@
  */
 
 class ClimateUserTools {
-    constructor(climateViz) {
-        this.app = climateViz;
-        this.carbonData = {
-            personal: {},
-            household: {},
-            business: {}
-        };
-        this.exportFormats = ['pdf', 'png', 'csv', 'json'];
-        this.comparisonData = [];
-        this.init();
+  constructor(climateViz) {
+    this.app = climateViz;
+    this.carbonData = {
+      personal: {},
+      household: {},
+      business: {},
+    };
+    this.exportFormats = ["pdf", "png", "csv", "json"];
+    this.comparisonData = [];
+    this.init();
+  }
+
+  init() {
+    this.setupCarbonCalculator();
+    this.setupDataExport();
+    this.setupComparisonTools();
+    this.setupImpactAssessment();
+    this.loadEmissionFactors();
+  }
+
+  setupCarbonCalculator() {
+    // Create carbon calculator UI if not exists
+    if (!document.getElementById("carbonCalculator")) {
+      this.createCarbonCalculatorUI();
     }
 
-    init() {
-        this.setupCarbonCalculator();
-        this.setupDataExport();
-        this.setupComparisonTools();
-        this.setupImpactAssessment();
-        this.loadEmissionFactors();
-    }
+    this.bindCarbonCalculatorEvents();
+  }
 
-    setupCarbonCalculator() {
-        // Create carbon calculator UI if not exists
-        if (!document.getElementById('carbonCalculator')) {
-            this.createCarbonCalculatorUI();
-        }
-        
-        this.bindCarbonCalculatorEvents();
-    }
-
-    createCarbonCalculatorUI() {
-        const calculatorHTML = `
+  createCarbonCalculatorUI() {
+    const calculatorHTML = `
             <!-- Carbon Calculator Section -->
             <section id="carbon-calculator" class="visualization-section">
                 <h2>🌱 Personal Carbon Footprint Calculator</h2>
@@ -522,324 +522,428 @@ class ClimateUserTools {
             </section>
         `;
 
-        // Insert before existing sections
-        const mainElement = document.querySelector('main');
-        const temperatureSection = document.getElementById('temperature');
-        temperatureSection.insertAdjacentHTML('beforebegin', calculatorHTML);
-    }
+    // Insert before existing sections
+    const mainElement = document.querySelector("main");
+    const temperatureSection = document.getElementById("temperature");
+    temperatureSection.insertAdjacentHTML("beforebegin", calculatorHTML);
+  }
 
-    bindCarbonCalculatorEvents() {
-        // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const tab = e.target.dataset.tab;
-                this.switchCalculatorTab(tab);
-            });
-        });
+  bindCarbonCalculatorEvents() {
+    // Tab switching
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const tab = e.target.dataset.tab;
+        this.switchCalculatorTab(tab);
+      });
+    });
 
-        // Real-time calculation updates
-        const inputs = document.querySelectorAll('#personal-calc input, #personal-calc select');
-        inputs.forEach(input => {
-            input.addEventListener('input', () => {
-                this.calculatePersonalFootprint();
-            });
-        });
+    // Real-time calculation updates
+    const inputs = document.querySelectorAll(
+      "#personal-calc input, #personal-calc select",
+    );
+    inputs.forEach((input) => {
+      input.addEventListener("input", () => {
+        this.calculatePersonalFootprint();
+      });
+    });
 
-        // Renewable energy percentage display
-        const renewableSlider = document.getElementById('renewable-percent');
-        const renewableDisplay = document.getElementById('renewable-display');
-        renewableSlider?.addEventListener('input', (e) => {
-            renewableDisplay.textContent = e.target.value + '%';
-            this.calculatePersonalFootprint();
-        });
+    // Renewable energy percentage display
+    const renewableSlider = document.getElementById("renewable-percent");
+    const renewableDisplay = document.getElementById("renewable-display");
+    renewableSlider?.addEventListener("input", (e) => {
+      renewableDisplay.textContent = e.target.value + "%";
+      this.calculatePersonalFootprint();
+    });
 
-        // Calculator actions
-        document.getElementById('calculate-footprint')?.addEventListener('click', () => {
-            this.calculateActiveFootprint();
-        });
-
-        document.getElementById('export-calculation')?.addEventListener('click', () => {
-            this.exportCalculation();
-        });
-
-        document.getElementById('save-calculation')?.addEventListener('click', () => {
-            this.saveCalculation();
-        });
-
-        document.getElementById('share-results')?.addEventListener('click', () => {
-            this.shareCalculationResults();
-        });
-    }
-
-    loadEmissionFactors() {
-        // Emission factors for various activities (kg CO2e)
-        this.emissionFactors = {
-            transport: {
-                gas: 0.404,          // kg CO2e per mile
-                hybrid: 0.256,       // kg CO2e per mile
-                electric: 0.124,     // kg CO2e per mile (avg US grid)
-                diesel: 0.451,       // kg CO2e per mile
-                flight: 0.241,       // kg CO2e per mile
-                publicTransport: 0.089 // kg CO2e per mile
-            },
-            energy: {
-                electricity: 0.709,  // kg CO2e per kWh (US average)
-                naturalGas: 5.302,   // kg CO2e per therm
-                homeTypeMultiplier: {
-                    apartment: 0.7,
-                    'house-small': 1.0,
-                    'house-medium': 1.3,
-                    'house-large': 1.8
-                }
-            },
-            diet: {
-                'meat-heavy': 3.3,   // tons CO2e per year
-                'average': 2.5,
-                'low-meat': 1.9,
-                'vegetarian': 1.4,
-                'vegan': 1.0
-            },
-            lifestyle: {
-                shopping: {
-                    'minimal': 0.5,
-                    'moderate': 1.2,
-                    'frequent': 2.1,
-                    'excessive': 3.5
-                },
-                wasteReduction: {
-                    'high': 0.8,      // multiplier
-                    'medium': 1.0,
-                    'low': 1.3
-                }
-            }
-        };
-
-        this.recommendations = {
-            transport: [
-                { action: "Switch to electric vehicle", impact: 2.5, cost: "High", difficulty: "Medium" },
-                { action: "Use public transportation", impact: 1.8, cost: "Low", difficulty: "Easy" },
-                { action: "Work from home 2 days/week", impact: 1.2, cost: "None", difficulty: "Easy" },
-                { action: "Combine errands into fewer trips", impact: 0.5, cost: "None", difficulty: "Easy" }
-            ],
-            energy: [
-                { action: "Install solar panels", impact: 3.2, cost: "High", difficulty: "Hard" },
-                { action: "Switch to renewable energy plan", impact: 2.8, cost: "Low", difficulty: "Easy" },
-                { action: "Improve home insulation", impact: 1.5, cost: "Medium", difficulty: "Medium" },
-                { action: "Use LED bulbs throughout home", impact: 0.3, cost: "Low", difficulty: "Easy" }
-            ],
-            diet: [
-                { action: "Reduce meat consumption by 50%", impact: 1.1, cost: "None", difficulty: "Medium" },
-                { action: "Buy local, seasonal produce", impact: 0.4, cost: "Low", difficulty: "Easy" },
-                { action: "Reduce food waste", impact: 0.8, cost: "None", difficulty: "Easy" },
-                { action: "Start a home garden", impact: 0.2, cost: "Low", difficulty: "Medium" }
-            ]
-        };
-    }
-
-    switchCalculatorTab(tab) {
-        // Update tab buttons
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.tab === tab);
-        });
-
-        // Update tab content
-        document.querySelectorAll('.calc-tab').forEach(content => {
-            content.classList.toggle('active', content.id === `${tab}-calc`);
-        });
-
-        // Calculate for the active tab
+    // Calculator actions
+    document
+      .getElementById("calculate-footprint")
+      ?.addEventListener("click", () => {
         this.calculateActiveFootprint();
+      });
+
+    document
+      .getElementById("export-calculation")
+      ?.addEventListener("click", () => {
+        this.exportCalculation();
+      });
+
+    document
+      .getElementById("save-calculation")
+      ?.addEventListener("click", () => {
+        this.saveCalculation();
+      });
+
+    document.getElementById("share-results")?.addEventListener("click", () => {
+      this.shareCalculationResults();
+    });
+  }
+
+  loadEmissionFactors() {
+    // Emission factors for various activities (kg CO2e)
+    this.emissionFactors = {
+      transport: {
+        gas: 0.404, // kg CO2e per mile
+        hybrid: 0.256, // kg CO2e per mile
+        electric: 0.124, // kg CO2e per mile (avg US grid)
+        diesel: 0.451, // kg CO2e per mile
+        flight: 0.241, // kg CO2e per mile
+        publicTransport: 0.089, // kg CO2e per mile
+      },
+      energy: {
+        electricity: 0.709, // kg CO2e per kWh (US average)
+        naturalGas: 5.302, // kg CO2e per therm
+        homeTypeMultiplier: {
+          apartment: 0.7,
+          "house-small": 1.0,
+          "house-medium": 1.3,
+          "house-large": 1.8,
+        },
+      },
+      diet: {
+        "meat-heavy": 3.3, // tons CO2e per year
+        average: 2.5,
+        "low-meat": 1.9,
+        vegetarian: 1.4,
+        vegan: 1.0,
+      },
+      lifestyle: {
+        shopping: {
+          minimal: 0.5,
+          moderate: 1.2,
+          frequent: 2.1,
+          excessive: 3.5,
+        },
+        wasteReduction: {
+          high: 0.8, // multiplier
+          medium: 1.0,
+          low: 1.3,
+        },
+      },
+    };
+
+    this.recommendations = {
+      transport: [
+        {
+          action: "Switch to electric vehicle",
+          impact: 2.5,
+          cost: "High",
+          difficulty: "Medium",
+        },
+        {
+          action: "Use public transportation",
+          impact: 1.8,
+          cost: "Low",
+          difficulty: "Easy",
+        },
+        {
+          action: "Work from home 2 days/week",
+          impact: 1.2,
+          cost: "None",
+          difficulty: "Easy",
+        },
+        {
+          action: "Combine errands into fewer trips",
+          impact: 0.5,
+          cost: "None",
+          difficulty: "Easy",
+        },
+      ],
+      energy: [
+        {
+          action: "Install solar panels",
+          impact: 3.2,
+          cost: "High",
+          difficulty: "Hard",
+        },
+        {
+          action: "Switch to renewable energy plan",
+          impact: 2.8,
+          cost: "Low",
+          difficulty: "Easy",
+        },
+        {
+          action: "Improve home insulation",
+          impact: 1.5,
+          cost: "Medium",
+          difficulty: "Medium",
+        },
+        {
+          action: "Use LED bulbs throughout home",
+          impact: 0.3,
+          cost: "Low",
+          difficulty: "Easy",
+        },
+      ],
+      diet: [
+        {
+          action: "Reduce meat consumption by 50%",
+          impact: 1.1,
+          cost: "None",
+          difficulty: "Medium",
+        },
+        {
+          action: "Buy local, seasonal produce",
+          impact: 0.4,
+          cost: "Low",
+          difficulty: "Easy",
+        },
+        {
+          action: "Reduce food waste",
+          impact: 0.8,
+          cost: "None",
+          difficulty: "Easy",
+        },
+        {
+          action: "Start a home garden",
+          impact: 0.2,
+          cost: "Low",
+          difficulty: "Medium",
+        },
+      ],
+    };
+  }
+
+  switchCalculatorTab(tab) {
+    // Update tab buttons
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.tab === tab);
+    });
+
+    // Update tab content
+    document.querySelectorAll(".calc-tab").forEach((content) => {
+      content.classList.toggle("active", content.id === `${tab}-calc`);
+    });
+
+    // Calculate for the active tab
+    this.calculateActiveFootprint();
+  }
+
+  calculatePersonalFootprint() {
+    const factors = this.emissionFactors;
+
+    // Transportation emissions
+    const carMiles = parseFloat(
+      document.getElementById("car-miles")?.value || 0,
+    );
+    const vehicleType = document.getElementById("vehicle-type")?.value || "gas";
+    const flights = parseFloat(document.getElementById("flights")?.value || 0);
+    const publicTransport = parseFloat(
+      document.getElementById("public-transport")?.value || 0,
+    );
+
+    const transportEmissions =
+      (carMiles * 365 * factors.transport[vehicleType]) / 1000 + // Daily car miles to annual tons
+      (flights * 2000 * factors.transport.flight) / 1000 + // Average flight distance
+      (publicTransport * 52 * 30 * factors.transport.publicTransport) / 1000; // Weekly hours to annual tons
+
+    // Energy emissions
+    const electricity = parseFloat(
+      document.getElementById("electricity")?.value || 900,
+    );
+    const naturalGas = parseFloat(
+      document.getElementById("natural-gas")?.value || 80,
+    );
+    const homeType =
+      document.getElementById("home-type")?.value || "house-medium";
+    const renewablePercent = parseFloat(
+      document.getElementById("renewable-percent")?.value || 15,
+    );
+
+    const homeMultiplier = factors.energy.homeTypeMultiplier[homeType];
+    const energyEmissions =
+      (((electricity * 12 * factors.energy.electricity) / 1000) *
+        (1 - renewablePercent / 100) +
+        (naturalGas * 12 * factors.energy.naturalGas) / 1000) *
+      homeMultiplier;
+
+    // Diet emissions
+    const dietType = document.getElementById("diet-type")?.value || "average";
+    const dietEmissions = factors.diet[dietType];
+
+    // Lifestyle emissions
+    const shopping = document.getElementById("shopping")?.value || "moderate";
+    const wasteReduction =
+      document.getElementById("waste-reduction")?.value || "medium";
+
+    const lifestyleEmissions =
+      factors.lifestyle.shopping[shopping] *
+      factors.lifestyle.wasteReduction[wasteReduction];
+
+    // Total emissions
+    const totalEmissions =
+      transportEmissions + energyEmissions + dietEmissions + lifestyleEmissions;
+
+    // Update UI
+    document.getElementById("total-emissions").textContent =
+      totalEmissions.toFixed(1);
+    document.getElementById("user-total").textContent =
+      totalEmissions.toFixed(1) + "t";
+
+    // Update comparison bar
+    const userBar = document.querySelector(".comparison-item .bar");
+    const percentage = Math.min((totalEmissions / 16.0) * 100, 100);
+    userBar.style.width = percentage + "%";
+
+    // Store breakdown data
+    this.carbonData.personal = {
+      transport: transportEmissions,
+      energy: energyEmissions,
+      diet: dietEmissions,
+      lifestyle: lifestyleEmissions,
+      total: totalEmissions,
+    };
+
+    // Update breakdown chart
+    this.updateBreakdownChart();
+
+    // Generate recommendations
+    this.generateRecommendations();
+
+    return totalEmissions;
+  }
+
+  calculateActiveFootprint() {
+    const activeTab = document.querySelector(".calc-tab.active");
+    if (!activeTab) return;
+
+    switch (activeTab.id) {
+      case "personal-calc":
+        return this.calculatePersonalFootprint();
+      case "household-calc":
+        return this.calculateHouseholdFootprint();
+      case "business-calc":
+        return this.calculateBusinessFootprint();
     }
+  }
 
-    calculatePersonalFootprint() {
-        const factors = this.emissionFactors;
-        
-        // Transportation emissions
-        const carMiles = parseFloat(document.getElementById('car-miles')?.value || 0);
-        const vehicleType = document.getElementById('vehicle-type')?.value || 'gas';
-        const flights = parseFloat(document.getElementById('flights')?.value || 0);
-        const publicTransport = parseFloat(document.getElementById('public-transport')?.value || 0);
+  calculateHouseholdFootprint() {
+    const householdSize = parseFloat(
+      document.getElementById("household-size")?.value || 3,
+    );
+    const vehicles = parseFloat(
+      document.getElementById("household-vehicles")?.value || 2,
+    );
+    const homeSize = parseFloat(
+      document.getElementById("home-size")?.value || 2000,
+    );
 
-        const transportEmissions = 
-            (carMiles * 365 * factors.transport[vehicleType] / 1000) + // Daily car miles to annual tons
-            (flights * 2000 * factors.transport.flight / 1000) + // Average flight distance
-            (publicTransport * 52 * 30 * factors.transport.publicTransport / 1000); // Weekly hours to annual tons
+    // Simplified household calculation based on personal footprint
+    const personalFootprint = this.carbonData.personal.total || 12.5;
+    const householdTotal = personalFootprint * householdSize * 1.1; // 10% efficiency factor
+    const perPerson = householdTotal / householdSize;
 
-        // Energy emissions
-        const electricity = parseFloat(document.getElementById('electricity')?.value || 900);
-        const naturalGas = parseFloat(document.getElementById('natural-gas')?.value || 80);
-        const homeType = document.getElementById('home-type')?.value || 'house-medium';
-        const renewablePercent = parseFloat(document.getElementById('renewable-percent')?.value || 15);
+    document.getElementById("household-total-emissions").textContent =
+      householdTotal.toFixed(1);
+    document.getElementById("per-person-emissions").textContent =
+      perPerson.toFixed(1);
 
-        const homeMultiplier = factors.energy.homeTypeMultiplier[homeType];
-        const energyEmissions = (
-            (electricity * 12 * factors.energy.electricity / 1000) * (1 - renewablePercent / 100) +
-            (naturalGas * 12 * factors.energy.naturalGas / 1000)
-        ) * homeMultiplier;
+    this.carbonData.household = {
+      total: householdTotal,
+      perPerson: perPerson,
+      size: householdSize,
+    };
 
-        // Diet emissions
-        const dietType = document.getElementById('diet-type')?.value || 'average';
-        const dietEmissions = factors.diet[dietType];
+    return householdTotal;
+  }
 
-        // Lifestyle emissions
-        const shopping = document.getElementById('shopping')?.value || 'moderate';
-        const wasteReduction = document.getElementById('waste-reduction')?.value || 'medium';
-        
-        const lifestyleEmissions = factors.lifestyle.shopping[shopping] * factors.lifestyle.wasteReduction[wasteReduction];
+  calculateBusinessFootprint() {
+    const employees = parseFloat(
+      document.getElementById("employees")?.value || 50,
+    );
+    const officeSize = parseFloat(
+      document.getElementById("office-size")?.value || 5000,
+    );
+    const businessType =
+      document.getElementById("business-type")?.value || "office";
 
-        // Total emissions
-        const totalEmissions = transportEmissions + energyEmissions + dietEmissions + lifestyleEmissions;
+    // Business emission factors (tons CO2e per employee per year)
+    const businessFactors = {
+      office: 5.5,
+      retail: 4.2,
+      manufacturing: 12.8,
+      restaurant: 8.1,
+      tech: 4.8,
+    };
 
-        // Update UI
-        document.getElementById('total-emissions').textContent = totalEmissions.toFixed(1);
-        document.getElementById('user-total').textContent = totalEmissions.toFixed(1) + 't';
+    const baseFactor = businessFactors[businessType];
+    const sizeFactor = Math.sqrt(officeSize / 5000); // Office size impact
+    const businessTotal = employees * baseFactor * sizeFactor;
+    const perEmployee = businessTotal / employees;
 
-        // Update comparison bar
-        const userBar = document.querySelector('.comparison-item .bar');
-        const percentage = Math.min((totalEmissions / 16.0) * 100, 100);
-        userBar.style.width = percentage + '%';
+    document.getElementById("business-total-emissions").textContent =
+      businessTotal.toFixed(1);
+    document.getElementById("per-employee-emissions").textContent =
+      perEmployee.toFixed(1);
 
-        // Store breakdown data
-        this.carbonData.personal = {
-            transport: transportEmissions,
-            energy: energyEmissions,
-            diet: dietEmissions,
-            lifestyle: lifestyleEmissions,
-            total: totalEmissions
-        };
+    this.carbonData.business = {
+      total: businessTotal,
+      perEmployee: perEmployee,
+      employees: employees,
+      type: businessType,
+    };
 
-        // Update breakdown chart
-        this.updateBreakdownChart();
-        
-        // Generate recommendations
-        this.generateRecommendations();
+    return businessTotal;
+  }
 
-        return totalEmissions;
-    }
+  updateBreakdownChart() {
+    const ctx = document.getElementById("emissionsBreakdownChart");
+    if (!ctx || !this.carbonData.personal.total) return;
 
-    calculateActiveFootprint() {
-        const activeTab = document.querySelector('.calc-tab.active');
-        if (!activeTab) return;
+    const data = this.carbonData.personal;
 
-        switch (activeTab.id) {
-            case 'personal-calc':
-                return this.calculatePersonalFootprint();
-            case 'household-calc':
-                return this.calculateHouseholdFootprint();
-            case 'business-calc':
-                return this.calculateBusinessFootprint();
-        }
-    }
-
-    calculateHouseholdFootprint() {
-        const householdSize = parseFloat(document.getElementById('household-size')?.value || 3);
-        const vehicles = parseFloat(document.getElementById('household-vehicles')?.value || 2);
-        const homeSize = parseFloat(document.getElementById('home-size')?.value || 2000);
-
-        // Simplified household calculation based on personal footprint
-        const personalFootprint = this.carbonData.personal.total || 12.5;
-        const householdTotal = personalFootprint * householdSize * 1.1; // 10% efficiency factor
-        const perPerson = householdTotal / householdSize;
-
-        document.getElementById('household-total-emissions').textContent = householdTotal.toFixed(1);
-        document.getElementById('per-person-emissions').textContent = perPerson.toFixed(1);
-
-        this.carbonData.household = {
-            total: householdTotal,
-            perPerson: perPerson,
-            size: householdSize
-        };
-
-        return householdTotal;
-    }
-
-    calculateBusinessFootprint() {
-        const employees = parseFloat(document.getElementById('employees')?.value || 50);
-        const officeSize = parseFloat(document.getElementById('office-size')?.value || 5000);
-        const businessType = document.getElementById('business-type')?.value || 'office';
-
-        // Business emission factors (tons CO2e per employee per year)
-        const businessFactors = {
-            office: 5.5,
-            retail: 4.2,
-            manufacturing: 12.8,
-            restaurant: 8.1,
-            tech: 4.8
-        };
-
-        const baseFactor = businessFactors[businessType];
-        const sizeFactor = Math.sqrt(officeSize / 5000); // Office size impact
-        const businessTotal = employees * baseFactor * sizeFactor;
-        const perEmployee = businessTotal / employees;
-
-        document.getElementById('business-total-emissions').textContent = businessTotal.toFixed(1);
-        document.getElementById('per-employee-emissions').textContent = perEmployee.toFixed(1);
-
-        this.carbonData.business = {
-            total: businessTotal,
-            perEmployee: perEmployee,
-            employees: employees,
-            type: businessType
-        };
-
-        return businessTotal;
-    }
-
-    updateBreakdownChart() {
-        const ctx = document.getElementById('emissionsBreakdownChart');
-        if (!ctx || !this.carbonData.personal.total) return;
-
-        const data = this.carbonData.personal;
-        
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Transportation', 'Home Energy', 'Diet', 'Lifestyle'],
-                datasets: [{
-                    data: [data.transport, data.energy, data.diet, data.lifestyle],
-                    backgroundColor: ['#007AFF', '#34C759', '#FF9500', '#AF52DE'],
-                    borderWidth: 0
-                }]
+    new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels: ["Transportation", "Home Energy", "Diet", "Lifestyle"],
+        datasets: [
+          {
+            data: [data.transport, data.energy, data.diet, data.lifestyle],
+            backgroundColor: ["#007AFF", "#34C759", "#FF9500", "#AF52DE"],
+            borderWidth: 0,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              padding: 20,
+              usePointStyle: true,
+              font: { size: 14 },
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { 
-                            padding: 20,
-                            usePointStyle: true,
-                            font: { size: 14 }
-                        }
-                    }
-                }
-            }
-        });
-    }
+          },
+        },
+      },
+    });
+  }
 
-    generateRecommendations() {
-        const data = this.carbonData.personal;
-        if (!data.total) return;
+  generateRecommendations() {
+    const data = this.carbonData.personal;
+    if (!data.total) return;
 
-        const recommendationList = document.getElementById('recommendation-list');
-        if (!recommendationList) return;
+    const recommendationList = document.getElementById("recommendation-list");
+    if (!recommendationList) return;
 
-        // Determine top emission categories
-        const categories = [
-            { name: 'transport', value: data.transport },
-            { name: 'energy', value: data.energy },
-            { name: 'diet', value: data.diet }
-        ].sort((a, b) => b.value - a.value);
+    // Determine top emission categories
+    const categories = [
+      { name: "transport", value: data.transport },
+      { name: "energy", value: data.energy },
+      { name: "diet", value: data.diet },
+    ].sort((a, b) => b.value - a.value);
 
-        let recommendationsHTML = '';
-        
-        categories.forEach((category, index) => {
-            if (index < 2 && category.value > 1) { // Show top 2 categories with significant emissions
-                const recs = this.recommendations[category.name];
-                const topRec = recs[0]; // Get highest impact recommendation
-                
-                recommendationsHTML += `
+    let recommendationsHTML = "";
+
+    categories.forEach((category, index) => {
+      if (index < 2 && category.value > 1) {
+        // Show top 2 categories with significant emissions
+        const recs = this.recommendations[category.name];
+        const topRec = recs[0]; // Get highest impact recommendation
+
+        recommendationsHTML += `
                     <div class="recommendation-card">
                         <div class="rec-header">
                             <h4>${topRec.action}</h4>
@@ -857,124 +961,131 @@ class ClimateUserTools {
                         </div>
                     </div>
                 `;
-            }
+      }
+    });
+
+    recommendationList.innerHTML = recommendationsHTML;
+  }
+
+  setupDataExport() {
+    // Export format buttons
+    document.querySelectorAll(".export-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const format = e.target.dataset.format;
+        this.exportClimateData(format);
+      });
+    });
+
+    // Chart export buttons
+    document.querySelectorAll(".chart-export-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const chart = e.target.dataset.chart;
+        this.exportChart(chart);
+      });
+    });
+
+    // Custom report generation
+    document
+      .getElementById("generate-custom-report")
+      ?.addEventListener("click", () => {
+        this.generateCustomReport();
+      });
+  }
+
+  async exportClimateData(format) {
+    const includeTemp = document.getElementById("export-temperature")?.checked;
+    const includeSeaLevel = document.getElementById("export-sealevel")?.checked;
+    const includeEmissions =
+      document.getElementById("export-emissions")?.checked;
+    const includeEvents = document.getElementById("export-events")?.checked;
+
+    const exportData = {};
+
+    try {
+      if (includeTemp) {
+        exportData.temperature =
+          await this.app.climateAPI.getTemperatureAnomalies();
+      }
+      if (includeSeaLevel) {
+        exportData.seaLevel = await this.app.climateAPI.getSeaLevelData();
+      }
+      if (includeEmissions) {
+        exportData.emissions = await this.app.climateAPI.getEmissionsData();
+      }
+      if (includeEvents) {
+        exportData.extremeEvents =
+          await this.app.climateAPI.getExtremeEventsData();
+      }
+
+      switch (format) {
+        case "csv":
+          this.downloadCSV(exportData);
+          break;
+        case "json":
+          this.downloadJSON(exportData);
+          break;
+        case "pdf":
+          this.generatePDFReport(exportData);
+          break;
+      }
+    } catch (error) {
+      console.error("Export error:", error);
+      this.showExportError("Failed to export data");
+    }
+  }
+
+  downloadCSV(data) {
+    let csvContent = "";
+
+    Object.keys(data).forEach((key) => {
+      const dataset = data[key];
+      csvContent += `\n${key.toUpperCase()} DATA\n`;
+
+      if (dataset.data && Array.isArray(dataset.data)) {
+        // Get headers from first object
+        const headers = Object.keys(dataset.data[0]);
+        csvContent += headers.join(",") + "\n";
+
+        // Add data rows
+        dataset.data.forEach((row) => {
+          csvContent += headers.map((header) => row[header]).join(",") + "\n";
         });
+      }
+    });
 
-        recommendationList.innerHTML = recommendationsHTML;
-    }
+    this.downloadFile(csvContent, "climate-data.csv", "text/csv");
+  }
 
-    setupDataExport() {
-        // Export format buttons
-        document.querySelectorAll('.export-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const format = e.target.dataset.format;
-                this.exportClimateData(format);
-            });
-        });
+  downloadJSON(data) {
+    const jsonContent = JSON.stringify(data, null, 2);
+    this.downloadFile(jsonContent, "climate-data.json", "application/json");
+  }
 
-        // Chart export buttons
-        document.querySelectorAll('.chart-export-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const chart = e.target.dataset.chart;
-                this.exportChart(chart);
-            });
-        });
+  async generatePDFReport(data) {
+    // Create a comprehensive PDF report
+    const reportContent = this.createReportHTML(data);
 
-        // Custom report generation
-        document.getElementById('generate-custom-report')?.addEventListener('click', () => {
-            this.generateCustomReport();
-        });
-    }
+    // For demonstration, we'll create a data URL that could be processed
+    // In a real implementation, you'd use a library like jsPDF or send to a server
+    console.log("PDF Report would be generated with:", reportContent);
 
-    async exportClimateData(format) {
-        const includeTemp = document.getElementById('export-temperature')?.checked;
-        const includeSeaLevel = document.getElementById('export-sealevel')?.checked;
-        const includeEmissions = document.getElementById('export-emissions')?.checked;
-        const includeEvents = document.getElementById('export-events')?.checked;
+    // Simulate PDF download
+    const blob = new Blob([reportContent], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "climate-report.html";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
-        const exportData = {};
+  createReportHTML(data) {
+    const reportDate = new Date().toLocaleDateString();
+    const title =
+      document.getElementById("report-title")?.value ||
+      "Climate Analysis Report";
 
-        try {
-            if (includeTemp) {
-                exportData.temperature = await this.app.climateAPI.getTemperatureAnomalies();
-            }
-            if (includeSeaLevel) {
-                exportData.seaLevel = await this.app.climateAPI.getSeaLevelData();
-            }
-            if (includeEmissions) {
-                exportData.emissions = await this.app.climateAPI.getEmissionsData();
-            }
-            if (includeEvents) {
-                exportData.extremeEvents = await this.app.climateAPI.getExtremeEventsData();
-            }
-
-            switch (format) {
-                case 'csv':
-                    this.downloadCSV(exportData);
-                    break;
-                case 'json':
-                    this.downloadJSON(exportData);
-                    break;
-                case 'pdf':
-                    this.generatePDFReport(exportData);
-                    break;
-            }
-        } catch (error) {
-            console.error('Export error:', error);
-            this.showExportError('Failed to export data');
-        }
-    }
-
-    downloadCSV(data) {
-        let csvContent = '';
-        
-        Object.keys(data).forEach(key => {
-            const dataset = data[key];
-            csvContent += `\n${key.toUpperCase()} DATA\n`;
-            
-            if (dataset.data && Array.isArray(dataset.data)) {
-                // Get headers from first object
-                const headers = Object.keys(dataset.data[0]);
-                csvContent += headers.join(',') + '\n';
-                
-                // Add data rows
-                dataset.data.forEach(row => {
-                    csvContent += headers.map(header => row[header]).join(',') + '\n';
-                });
-            }
-        });
-
-        this.downloadFile(csvContent, 'climate-data.csv', 'text/csv');
-    }
-
-    downloadJSON(data) {
-        const jsonContent = JSON.stringify(data, null, 2);
-        this.downloadFile(jsonContent, 'climate-data.json', 'application/json');
-    }
-
-    async generatePDFReport(data) {
-        // Create a comprehensive PDF report
-        const reportContent = this.createReportHTML(data);
-        
-        // For demonstration, we'll create a data URL that could be processed
-        // In a real implementation, you'd use a library like jsPDF or send to a server
-        console.log('PDF Report would be generated with:', reportContent);
-        
-        // Simulate PDF download
-        const blob = new Blob([reportContent], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'climate-report.html';
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-
-    createReportHTML(data) {
-        const reportDate = new Date().toLocaleDateString();
-        const title = document.getElementById('report-title')?.value || 'Climate Analysis Report';
-        
-        return `
+    return `
             <!DOCTYPE html>
             <html>
             <head>
@@ -1002,210 +1113,232 @@ class ClimateUserTools {
                     </div>
                 </div>
 
-                ${Object.keys(data).map(key => `
+                ${Object.keys(data)
+                  .map(
+                    (key) => `
                     <div class="section">
                         <h2>${key.charAt(0).toUpperCase() + key.slice(1)} Data</h2>
                         <p>Source: ${data[key].source}</p>
                         <p>Last Updated: ${data[key].lastUpdated}</p>
                         <!-- Data visualization would be embedded here -->
                     </div>
-                `).join('')}
+                `,
+                  )
+                  .join("")}
             </body>
             </html>
         `;
+  }
+
+  downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  exportChart(chartName) {
+    // Get the chart canvas and export as image
+    let canvas;
+
+    switch (chartName) {
+      case "temperature":
+        canvas = document.getElementById("temperatureChart");
+        break;
+      case "sea-level":
+        canvas = document.getElementById("seaLevelChart");
+        break;
+      case "emissions":
+        canvas = document.getElementById("emissionsChart");
+        break;
+      case "heatmap":
+        canvas = document.querySelector("#heatmapChart svg");
+        break;
+      case "globe":
+        canvas = document.querySelector("#globeContainer canvas");
+        break;
+      case "projections":
+        canvas = document.getElementById("tempProjectionChart");
+        break;
     }
 
-    downloadFile(content, filename, mimeType) {
-        const blob = new Blob([content], { type: mimeType });
+    if (canvas) {
+      if (canvas.tagName === "CANVAS") {
+        // For canvas elements
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${chartName}-chart.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+      } else {
+        // For SVG elements (D3 charts)
+        this.exportSVGAsImage(canvas, `${chartName}-chart.png`);
+      }
+    }
+  }
+
+  exportSVGAsImage(svgElement, filename) {
+    // Convert SVG to PNG
+    const svgData = new XMLSerializer().serializeToString(svgElement);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
         a.download = filename;
-        document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
         URL.revokeObjectURL(url);
+      });
+    };
+
+    img.src = "data:image/svg+xml;base64," + btoa(svgData);
+  }
+
+  setupComparisonTools() {
+    // Region selection
+    document.querySelectorAll(".region-checkbox input").forEach((checkbox) => {
+      checkbox.addEventListener("change", () => {
+        this.updateComparisonRegions();
+      });
+    });
+
+    // Metric selection
+    document.querySelectorAll(".metric-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        document
+          .querySelectorAll(".metric-btn")
+          .forEach((b) => b.classList.remove("active"));
+        e.target.classList.add("active");
+      });
+    });
+
+    // Generate comparison
+    document
+      .getElementById("generate-comparison")
+      ?.addEventListener("click", () => {
+        this.generateRegionalComparison();
+      });
+  }
+
+  updateComparisonRegions() {
+    const selectedRegions = Array.from(
+      document.querySelectorAll(".region-checkbox input:checked"),
+    ).map((checkbox) => checkbox.value);
+
+    this.comparisonData = selectedRegions;
+  }
+
+  generateRegionalComparison() {
+    const selectedRegions = Array.from(
+      document.querySelectorAll(".region-checkbox input:checked"),
+    ).map((checkbox) => checkbox.value);
+
+    const selectedMetric =
+      document.querySelector(".metric-btn.active")?.dataset.metric ||
+      "temperature";
+
+    if (selectedRegions.length < 2) {
+      alert("Please select at least 2 regions to compare");
+      return;
     }
 
-    exportChart(chartName) {
-        // Get the chart canvas and export as image
-        let canvas;
-        
-        switch (chartName) {
-            case 'temperature':
-                canvas = document.getElementById('temperatureChart');
-                break;
-            case 'sea-level':
-                canvas = document.getElementById('seaLevelChart');
-                break;
-            case 'emissions':
-                canvas = document.getElementById('emissionsChart');
-                break;
-            case 'heatmap':
-                canvas = document.querySelector('#heatmapChart svg');
-                break;
-            case 'globe':
-                canvas = document.querySelector('#globeContainer canvas');
-                break;
-            case 'projections':
-                canvas = document.getElementById('tempProjectionChart');
-                break;
-        }
+    this.createComparisonChart(selectedRegions, selectedMetric);
+    this.createComparisonTable(selectedRegions, selectedMetric);
+  }
 
-        if (canvas) {
-            if (canvas.tagName === 'CANVAS') {
-                // For canvas elements
-                canvas.toBlob(blob => {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${chartName}-chart.png`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                });
-            } else {
-                // For SVG elements (D3 charts)
-                this.exportSVGAsImage(canvas, `${chartName}-chart.png`);
-            }
-        }
-    }
+  createComparisonChart(regions, metric) {
+    const ctx = document.getElementById("comparisonChart");
+    if (!ctx) return;
 
-    exportSVGAsImage(svgElement, filename) {
-        // Convert SVG to PNG
-        const svgData = new XMLSerializer().serializeToString(svgElement);
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        
-        img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            
-            canvas.toBlob(blob => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                a.click();
-                URL.revokeObjectURL(url);
-            });
-        };
-        
-        img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-    }
+    // Generate comparison data
+    const datasets = regions.map((region, index) => {
+      const multiplier =
+        this.app.advancedFeatures?.locationData[region]?.tempMultiplier || 1;
+      const baseData = this.generateComparisonData(metric, multiplier);
 
-    setupComparisonTools() {
-        // Region selection
-        document.querySelectorAll('.region-checkbox input').forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
-                this.updateComparisonRegions();
-            });
-        });
+      const colors = [
+        "#007AFF",
+        "#34C759",
+        "#FF9500",
+        "#AF52DE",
+        "#FF3B30",
+        "#5856D6",
+        "#00C7BE",
+        "#FFD60A",
+      ];
 
-        // Metric selection
-        document.querySelectorAll('.metric-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.metric-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-            });
-        });
+      return {
+        label: this.getRegionDisplayName(region),
+        data: baseData,
+        borderColor: colors[index % colors.length],
+        backgroundColor: colors[index % colors.length] + "20",
+        borderWidth: 3,
+        fill: false,
+      };
+    });
 
-        // Generate comparison
-        document.getElementById('generate-comparison')?.addEventListener('click', () => {
-            this.generateRegionalComparison();
-        });
-    }
-
-    updateComparisonRegions() {
-        const selectedRegions = Array.from(document.querySelectorAll('.region-checkbox input:checked'))
-            .map(checkbox => checkbox.value);
-        
-        this.comparisonData = selectedRegions;
-    }
-
-    generateRegionalComparison() {
-        const selectedRegions = Array.from(document.querySelectorAll('.region-checkbox input:checked'))
-            .map(checkbox => checkbox.value);
-        
-        const selectedMetric = document.querySelector('.metric-btn.active')?.dataset.metric || 'temperature';
-        
-        if (selectedRegions.length < 2) {
-            alert('Please select at least 2 regions to compare');
-            return;
-        }
-
-        this.createComparisonChart(selectedRegions, selectedMetric);
-        this.createComparisonTable(selectedRegions, selectedMetric);
-    }
-
-    createComparisonChart(regions, metric) {
-        const ctx = document.getElementById('comparisonChart');
-        if (!ctx) return;
-
-        // Generate comparison data
-        const datasets = regions.map((region, index) => {
-            const multiplier = this.app.advancedFeatures?.locationData[region]?.tempMultiplier || 1;
-            const baseData = this.generateComparisonData(metric, multiplier);
-            
-            const colors = ['#007AFF', '#34C759', '#FF9500', '#AF52DE', '#FF3B30', '#5856D6', '#00C7BE', '#FFD60A'];
-            
-            return {
-                label: this.getRegionDisplayName(region),
-                data: baseData,
-                borderColor: colors[index % colors.length],
-                backgroundColor: colors[index % colors.length] + '20',
-                borderWidth: 3,
-                fill: false
-            };
-        });
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: this.generateYearLabels(2000, 2023),
-                datasets: datasets
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: this.generateYearLabels(2000, 2023),
+        datasets: datasets,
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: `Regional ${metric.charAt(0).toUpperCase() + metric.slice(1)} Comparison`,
+            font: { size: 18, weight: "bold" },
+          },
+          legend: {
+            position: "bottom",
+          },
+        },
+        scales: {
+          y: {
+            title: {
+              display: true,
+              text: this.getMetricUnit(metric),
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: `Regional ${metric.charAt(0).toUpperCase() + metric.slice(1)} Comparison`,
-                        font: { size: 18, weight: 'bold' }
-                    },
-                    legend: {
-                        position: 'bottom'
-                    }
-                },
-                scales: {
-                    y: {
-                        title: {
-                            display: true,
-                            text: this.getMetricUnit(metric)
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Year'
-                        }
-                    }
-                }
-            }
-        });
-    }
+          },
+          x: {
+            title: {
+              display: true,
+              text: "Year",
+            },
+          },
+        },
+      },
+    });
+  }
 
-    createComparisonTable(regions, metric) {
-        const table = document.getElementById('comparisonTable');
-        if (!table) return;
+  createComparisonTable(regions, metric) {
+    const table = document.getElementById("comparisonTable");
+    if (!table) return;
 
-        const thead = table.querySelector('thead');
-        const tbody = table.querySelector('tbody');
-        
-        // Create headers
-        thead.innerHTML = `
+    const thead = table.querySelector("thead");
+    const tbody = table.querySelector("tbody");
+
+    // Create headers
+    thead.innerHTML = `
             <tr>
                 <th>Region</th>
                 <th>Current Value</th>
@@ -1215,15 +1348,31 @@ class ClimateUserTools {
             </tr>
         `;
 
-        // Create data rows
-        tbody.innerHTML = regions.map(region => {
-            const multiplier = this.app.advancedFeatures?.locationData[region]?.tempMultiplier || 1;
-            const currentValue = this.getRegionCurrentValue(region, metric, multiplier);
-            const tenYearChange = this.getRegionChange(region, metric, 10, multiplier);
-            const totalChange = this.getRegionChange(region, metric, 23, multiplier);
-            const trend = totalChange > 0 ? '📈 Increasing' : '📉 Decreasing';
-            
-            return `
+    // Create data rows
+    tbody.innerHTML = regions
+      .map((region) => {
+        const multiplier =
+          this.app.advancedFeatures?.locationData[region]?.tempMultiplier || 1;
+        const currentValue = this.getRegionCurrentValue(
+          region,
+          metric,
+          multiplier,
+        );
+        const tenYearChange = this.getRegionChange(
+          region,
+          metric,
+          10,
+          multiplier,
+        );
+        const totalChange = this.getRegionChange(
+          region,
+          metric,
+          23,
+          multiplier,
+        );
+        const trend = totalChange > 0 ? "📈 Increasing" : "📉 Decreasing";
+
+        return `
                 <tr>
                     <td><strong>${this.getRegionDisplayName(region)}</strong></td>
                     <td>${currentValue}</td>
@@ -1232,372 +1381,426 @@ class ClimateUserTools {
                     <td>${trend}</td>
                 </tr>
             `;
-        }).join('');
+      })
+      .join("");
+  }
+
+  generateComparisonData(metric, multiplier) {
+    const baseValues = {
+      temperature: Array.from(
+        { length: 24 },
+        (_, i) => (0.5 + i * 0.03) * multiplier,
+      ),
+      "sea-level": Array.from(
+        { length: 24 },
+        (_, i) => (20 + i * 3.2) * multiplier,
+      ),
+      precipitation: Array.from(
+        { length: 24 },
+        (_, i) => 100 + Math.sin(i * 0.3) * 10 * multiplier,
+      ),
+      "extreme-events": Array.from(
+        { length: 24 },
+        (_, i) => 10 + i * 0.8 * multiplier,
+      ),
+    };
+
+    return baseValues[metric] || baseValues.temperature;
+  }
+
+  generateYearLabels(start, end) {
+    return Array.from({ length: end - start + 1 }, (_, i) =>
+      (start + i).toString(),
+    );
+  }
+
+  getRegionDisplayName(region) {
+    const names = {
+      global: "🌍 Global",
+      arctic: "🧊 Arctic",
+      "north-america": "🍁 North America",
+      europe: "🏰 Europe",
+      asia: "🏯 Asia",
+      africa: "🦁 Africa",
+      "south-america": "🦜 South America",
+      oceania: "🏄 Oceania",
+    };
+    return names[region] || region;
+  }
+
+  getMetricUnit(metric) {
+    const units = {
+      temperature: "Temperature Anomaly (°C)",
+      "sea-level": "Sea Level Rise (mm)",
+      precipitation: "Precipitation Change (%)",
+      "extreme-events": "Number of Events",
+    };
+    return units[metric] || "";
+  }
+
+  getRegionCurrentValue(region, metric, multiplier) {
+    const baseValues = {
+      temperature: 1.1 * multiplier,
+      "sea-level": 95 * multiplier,
+      precipitation: 105 * multiplier,
+      "extreme-events": 25 * multiplier,
+    };
+
+    const value = baseValues[metric] || 0;
+    const units = {
+      temperature: "°C",
+      "sea-level": "mm",
+      precipitation: "%",
+      "extreme-events": " events",
+    };
+
+    return value.toFixed(1) + units[metric];
+  }
+
+  getRegionChange(region, metric, years, multiplier) {
+    const changeRates = {
+      temperature: 0.03 * years * multiplier,
+      "sea-level": 3.2 * years * multiplier,
+      precipitation: 2.1 * years * multiplier,
+      "extreme-events": 0.8 * years * multiplier,
+    };
+
+    const change = changeRates[metric] || 0;
+    const sign = change >= 0 ? "+" : "";
+    const units = {
+      temperature: "°C",
+      "sea-level": "mm",
+      precipitation: "%",
+      "extreme-events": " events",
+    };
+
+    return sign + change.toFixed(1) + units[metric];
+  }
+
+  setupImpactAssessment() {
+    // Wizard navigation
+    document.getElementById("next-step")?.addEventListener("click", () => {
+      this.nextAssessmentStep();
+    });
+
+    document.getElementById("prev-step")?.addEventListener("click", () => {
+      this.prevAssessmentStep();
+    });
+
+    // Location detection
+    document
+      .getElementById("use-current-location")
+      ?.addEventListener("click", () => {
+        this.getCurrentLocation();
+      });
+
+    // Scenario selection
+    document.querySelectorAll(".scenario-card").forEach((card) => {
+      card.addEventListener("click", (e) => {
+        document
+          .querySelectorAll(".scenario-card")
+          .forEach((c) => c.classList.remove("selected"));
+        e.target.classList.add("selected");
+      });
+    });
+
+    this.assessmentStep = 1;
+  }
+
+  nextAssessmentStep() {
+    if (this.assessmentStep < 4) {
+      this.assessmentStep++;
+      this.updateAssessmentStep();
+
+      if (this.assessmentStep === 4) {
+        this.runImpactAssessment();
+      }
     }
+  }
 
-    generateComparisonData(metric, multiplier) {
-        const baseValues = {
-            temperature: Array.from({length: 24}, (_, i) => (0.5 + i * 0.03) * multiplier),
-            'sea-level': Array.from({length: 24}, (_, i) => (20 + i * 3.2) * multiplier),
-            precipitation: Array.from({length: 24}, (_, i) => 100 + (Math.sin(i * 0.3) * 10) * multiplier),
-            'extreme-events': Array.from({length: 24}, (_, i) => 10 + i * 0.8 * multiplier)
-        };
-        
-        return baseValues[metric] || baseValues.temperature;
+  prevAssessmentStep() {
+    if (this.assessmentStep > 1) {
+      this.assessmentStep--;
+      this.updateAssessmentStep();
     }
+  }
 
-    generateYearLabels(start, end) {
-        return Array.from({length: end - start + 1}, (_, i) => (start + i).toString());
-    }
+  updateAssessmentStep() {
+    // Update step indicators
+    document.querySelectorAll(".step").forEach((step, index) => {
+      step.classList.toggle("active", index + 1 === this.assessmentStep);
+    });
 
-    getRegionDisplayName(region) {
-        const names = {
-            global: '🌍 Global',
-            arctic: '🧊 Arctic',
-            'north-america': '🍁 North America',
-            europe: '🏰 Europe',
-            asia: '🏯 Asia',
-            africa: '🦁 Africa',
-            'south-america': '🦜 South America',
-            oceania: '🏄 Oceania'
-        };
-        return names[region] || region;
-    }
+    // Update step content
+    document.querySelectorAll(".wizard-step").forEach((step, index) => {
+      step.classList.toggle("active", index + 1 === this.assessmentStep);
+    });
 
-    getMetricUnit(metric) {
-        const units = {
-            temperature: 'Temperature Anomaly (°C)',
-            'sea-level': 'Sea Level Rise (mm)',
-            precipitation: 'Precipitation Change (%)',
-            'extreme-events': 'Number of Events'
-        };
-        return units[metric] || '';
-    }
+    // Update navigation buttons
+    const prevBtn = document.getElementById("prev-step");
+    const nextBtn = document.getElementById("next-step");
 
-    getRegionCurrentValue(region, metric, multiplier) {
-        const baseValues = {
-            temperature: 1.1 * multiplier,
-            'sea-level': 95 * multiplier,
-            precipitation: 105 * multiplier,
-            'extreme-events': 25 * multiplier
-        };
-        
-        const value = baseValues[metric] || 0;
-        const units = {
-            temperature: '°C',
-            'sea-level': 'mm',
-            precipitation: '%',
-            'extreme-events': ' events'
-        };
-        
-        return value.toFixed(1) + units[metric];
-    }
+    prevBtn.disabled = this.assessmentStep === 1;
+    nextBtn.textContent =
+      this.assessmentStep === 4 ? "Restart Assessment" : "Next";
 
-    getRegionChange(region, metric, years, multiplier) {
-        const changeRates = {
-            temperature: 0.03 * years * multiplier,
-            'sea-level': 3.2 * years * multiplier,
-            precipitation: 2.1 * years * multiplier,
-            'extreme-events': 0.8 * years * multiplier
-        };
-        
-        const change = changeRates[metric] || 0;
-        const sign = change >= 0 ? '+' : '';
-        const units = {
-            temperature: '°C',
-            'sea-level': 'mm',
-            precipitation: '%',
-            'extreme-events': ' events'
-        };
-        
-        return sign + change.toFixed(1) + units[metric];
-    }
-
-    setupImpactAssessment() {
-        // Wizard navigation
-        document.getElementById('next-step')?.addEventListener('click', () => {
-            this.nextAssessmentStep();
-        });
-
-        document.getElementById('prev-step')?.addEventListener('click', () => {
-            this.prevAssessmentStep();
-        });
-
-        // Location detection
-        document.getElementById('use-current-location')?.addEventListener('click', () => {
-            this.getCurrentLocation();
-        });
-
-        // Scenario selection
-        document.querySelectorAll('.scenario-card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
-                e.target.classList.add('selected');
-            });
-        });
-
+    if (
+      this.assessmentStep === 4 &&
+      nextBtn.textContent === "Restart Assessment"
+    ) {
+      nextBtn.onclick = () => {
         this.assessmentStep = 1;
+        this.updateAssessmentStep();
+      };
+    }
+  }
+
+  getCurrentLocation() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          document.getElementById("assessment-location").value =
+            `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          alert("Unable to get your location. Please enter it manually.");
+        },
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  }
+
+  runImpactAssessment() {
+    const location = document.getElementById("assessment-location")?.value;
+    const timeframe = document.querySelector(
+      'input[name="timeframe"]:checked',
+    )?.value;
+    const scenario = document.querySelector(".scenario-card.selected")?.dataset
+      .scenario;
+
+    if (!location || !timeframe || !scenario) {
+      alert("Please complete all assessment steps");
+      return;
     }
 
-    nextAssessmentStep() {
-        if (this.assessmentStep < 4) {
-            this.assessmentStep++;
-            this.updateAssessmentStep();
-            
-            if (this.assessmentStep === 4) {
-                this.runImpactAssessment();
-            }
-        }
+    // Calculate impact score based on inputs
+    const impactScore = this.calculateImpactScore(
+      location,
+      timeframe,
+      scenario,
+    );
+
+    // Update results display
+    this.displayImpactResults(impactScore, timeframe, scenario);
+  }
+
+  calculateImpactScore(location, timeframe, scenario) {
+    // Simplified impact calculation
+    const timeframeFactor = {
+      2030: 0.3,
+      2050: 0.7,
+      2100: 1.0,
+    };
+
+    const scenarioFactor = {
+      rcp26: 0.4,
+      rcp45: 0.7,
+      rcp85: 1.0,
+    };
+
+    const baseFactor = timeframeFactor[timeframe] * scenarioFactor[scenario];
+    const locationFactor = this.getLocationImpactFactor(location);
+
+    return Math.min(baseFactor * locationFactor * 10, 10);
+  }
+
+  getLocationImpactFactor(location) {
+    // Simplified location-based impact factors
+    if (location.includes("Florida") || location.includes("Miami")) return 1.5;
+    if (location.includes("California") || location.includes("Los Angeles"))
+      return 1.3;
+    if (location.includes("New York")) return 1.2;
+    if (location.includes("Arctic") || location.includes("Alaska")) return 2.0;
+    return 1.0; // Default
+  }
+
+  displayImpactResults(score, timeframe, scenario) {
+    document.getElementById("impact-score").textContent = score.toFixed(1);
+
+    // Update impact details based on scenario
+    const impacts = this.calculateSpecificImpacts(score, timeframe, scenario);
+
+    document.querySelector(
+      ".impact-item:nth-child(1) .impact-value",
+    ).textContent = `+${impacts.temperature}°C`;
+    document.querySelector(
+      ".impact-item:nth-child(2) .impact-value",
+    ).textContent = `+${impacts.seaLevel}cm`;
+    document.querySelector(
+      ".impact-item:nth-child(3) .impact-value",
+    ).textContent = `+${impacts.precipitation}%`;
+    document.querySelector(
+      ".impact-item:nth-child(4) .impact-value",
+    ).textContent = `+${impacts.extremeEvents}%`;
+
+    // Generate adaptation recommendations
+    this.generateAdaptationRecommendations(score, impacts);
+
+    // Create impact meter visualization
+    this.createImpactMeter(score);
+  }
+
+  calculateSpecificImpacts(score, timeframe, scenario) {
+    const baseFactor = score / 10;
+
+    return {
+      temperature: (baseFactor * 4.5).toFixed(1),
+      seaLevel: Math.round(baseFactor * 80),
+      precipitation: Math.round(baseFactor * 25),
+      extremeEvents: Math.round(baseFactor * 75),
+    };
+  }
+
+  generateAdaptationRecommendations(score, impacts) {
+    const adaptationList = document.getElementById("adaptation-list");
+    if (!adaptationList) return;
+
+    const recommendations = [];
+
+    if (parseFloat(impacts.temperature) > 2) {
+      recommendations.push(
+        "Install efficient cooling systems and improve building insulation",
+      );
     }
 
-    prevAssessmentStep() {
-        if (this.assessmentStep > 1) {
-            this.assessmentStep--;
-            this.updateAssessmentStep();
-        }
+    if (parseInt(impacts.seaLevel) > 30) {
+      recommendations.push(
+        "Consider flood barriers and elevated infrastructure",
+      );
     }
 
-    updateAssessmentStep() {
-        // Update step indicators
-        document.querySelectorAll('.step').forEach((step, index) => {
-            step.classList.toggle('active', index + 1 === this.assessmentStep);
-        });
-
-        // Update step content
-        document.querySelectorAll('.wizard-step').forEach((step, index) => {
-            step.classList.toggle('active', index + 1 === this.assessmentStep);
-        });
-
-        // Update navigation buttons
-        const prevBtn = document.getElementById('prev-step');
-        const nextBtn = document.getElementById('next-step');
-        
-        prevBtn.disabled = this.assessmentStep === 1;
-        nextBtn.textContent = this.assessmentStep === 4 ? 'Restart Assessment' : 'Next';
-        
-        if (this.assessmentStep === 4 && nextBtn.textContent === 'Restart Assessment') {
-            nextBtn.onclick = () => {
-                this.assessmentStep = 1;
-                this.updateAssessmentStep();
-            };
-        }
+    if (parseInt(impacts.precipitation) > 15) {
+      recommendations.push(
+        "Implement water management and drought-resistant landscaping",
+      );
     }
 
-    getCurrentLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    document.getElementById('assessment-location').value = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
-                },
-                (error) => {
-                    console.error('Geolocation error:', error);
-                    alert('Unable to get your location. Please enter it manually.');
-                }
-            );
-        } else {
-            alert('Geolocation is not supported by your browser.');
-        }
+    if (parseInt(impacts.extremeEvents) > 50) {
+      recommendations.push(
+        "Develop emergency preparedness plans and resilient infrastructure",
+      );
     }
 
-    runImpactAssessment() {
-        const location = document.getElementById('assessment-location')?.value;
-        const timeframe = document.querySelector('input[name="timeframe"]:checked')?.value;
-        const scenario = document.querySelector('.scenario-card.selected')?.dataset.scenario;
-
-        if (!location || !timeframe || !scenario) {
-            alert('Please complete all assessment steps');
-            return;
-        }
-
-        // Calculate impact score based on inputs
-        const impactScore = this.calculateImpactScore(location, timeframe, scenario);
-        
-        // Update results display
-        this.displayImpactResults(impactScore, timeframe, scenario);
+    if (score > 7) {
+      recommendations.push("Consider relocation to less vulnerable areas");
+      recommendations.push(
+        "Invest in renewable energy and sustainable transportation",
+      );
     }
 
-    calculateImpactScore(location, timeframe, scenario) {
-        // Simplified impact calculation
-        const timeframeFactor = {
-            '2030': 0.3,
-            '2050': 0.7,
-            '2100': 1.0
-        };
+    adaptationList.innerHTML = recommendations
+      .map((rec) => `<li>${rec}</li>`)
+      .join("");
+  }
 
-        const scenarioFactor = {
-            'rcp26': 0.4,
-            'rcp45': 0.7,
-            'rcp85': 1.0
-        };
+  createImpactMeter(score) {
+    const canvas = document.getElementById("impactMeter");
+    if (!canvas) return;
 
-        const baseFactor = timeframeFactor[timeframe] * scenarioFactor[scenario];
-        const locationFactor = this.getLocationImpactFactor(location);
-        
-        return Math.min(baseFactor * locationFactor * 10, 10);
+    const ctx = canvas.getContext("2d");
+    canvas.width = 200;
+    canvas.height = 200;
+
+    const centerX = 100;
+    const centerY = 100;
+    const radius = 80;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, 200, 200);
+
+    // Draw background circle
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = "#e0e0e0";
+    ctx.lineWidth = 20;
+    ctx.stroke();
+
+    // Draw score arc
+    const scoreAngle = (score / 10) * 2 * Math.PI;
+    const color = score < 3 ? "#34C759" : score < 7 ? "#FF9500" : "#FF3B30";
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + scoreAngle);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 20;
+    ctx.lineCap = "round";
+    ctx.stroke();
+  }
+
+  exportCalculation() {
+    const activeTab = document.querySelector(".calc-tab.active");
+    if (!activeTab) return;
+
+    const data = {
+      type: activeTab.id.replace("-calc", ""),
+      timestamp: new Date().toISOString(),
+      data: this.carbonData,
+    };
+
+    this.downloadJSON(data);
+  }
+
+  saveCalculation() {
+    const activeTab = document.querySelector(".calc-tab.active");
+    if (!activeTab) return;
+
+    // Save to localStorage
+    const calculations = JSON.parse(
+      localStorage.getItem("climateCalculations") || "[]",
+    );
+    calculations.push({
+      id: Date.now(),
+      type: activeTab.id.replace("-calc", ""),
+      timestamp: new Date().toISOString(),
+      data: this.carbonData,
+    });
+
+    localStorage.setItem("climateCalculations", JSON.stringify(calculations));
+
+    // Show success message
+    this.showSaveSuccess();
+  }
+
+  shareCalculationResults() {
+    const data = this.carbonData.personal;
+    if (!data.total) return;
+
+    const text = `I just calculated my carbon footprint: ${data.total.toFixed(1)} tons CO₂e/year. Check out this climate visualization tool!`;
+    const url = window.location.href;
+
+    if (navigator.share) {
+      navigator.share({
+        title: "My Carbon Footprint",
+        text: text,
+        url: url,
+      });
+    } else {
+      // Fallback to clipboard
+      navigator.clipboard.writeText(`${text} ${url}`).then(() => {
+        alert("Results copied to clipboard!");
+      });
     }
+  }
 
-    getLocationImpactFactor(location) {
-        // Simplified location-based impact factors
-        if (location.includes('Florida') || location.includes('Miami')) return 1.5;
-        if (location.includes('California') || location.includes('Los Angeles')) return 1.3;
-        if (location.includes('New York')) return 1.2;
-        if (location.includes('Arctic') || location.includes('Alaska')) return 2.0;
-        return 1.0; // Default
-    }
-
-    displayImpactResults(score, timeframe, scenario) {
-        document.getElementById('impact-score').textContent = score.toFixed(1);
-        
-        // Update impact details based on scenario
-        const impacts = this.calculateSpecificImpacts(score, timeframe, scenario);
-        
-        document.querySelector('.impact-item:nth-child(1) .impact-value').textContent = `+${impacts.temperature}°C`;
-        document.querySelector('.impact-item:nth-child(2) .impact-value').textContent = `+${impacts.seaLevel}cm`;
-        document.querySelector('.impact-item:nth-child(3) .impact-value').textContent = `+${impacts.precipitation}%`;
-        document.querySelector('.impact-item:nth-child(4) .impact-value').textContent = `+${impacts.extremeEvents}%`;
-
-        // Generate adaptation recommendations
-        this.generateAdaptationRecommendations(score, impacts);
-        
-        // Create impact meter visualization
-        this.createImpactMeter(score);
-    }
-
-    calculateSpecificImpacts(score, timeframe, scenario) {
-        const baseFactor = score / 10;
-        
-        return {
-            temperature: (baseFactor * 4.5).toFixed(1),
-            seaLevel: Math.round(baseFactor * 80),
-            precipitation: Math.round(baseFactor * 25),
-            extremeEvents: Math.round(baseFactor * 75)
-        };
-    }
-
-    generateAdaptationRecommendations(score, impacts) {
-        const adaptationList = document.getElementById('adaptation-list');
-        if (!adaptationList) return;
-
-        const recommendations = [];
-        
-        if (parseFloat(impacts.temperature) > 2) {
-            recommendations.push('Install efficient cooling systems and improve building insulation');
-        }
-        
-        if (parseInt(impacts.seaLevel) > 30) {
-            recommendations.push('Consider flood barriers and elevated infrastructure');
-        }
-        
-        if (parseInt(impacts.precipitation) > 15) {
-            recommendations.push('Implement water management and drought-resistant landscaping');
-        }
-        
-        if (parseInt(impacts.extremeEvents) > 50) {
-            recommendations.push('Develop emergency preparedness plans and resilient infrastructure');
-        }
-
-        if (score > 7) {
-            recommendations.push('Consider relocation to less vulnerable areas');
-            recommendations.push('Invest in renewable energy and sustainable transportation');
-        }
-
-        adaptationList.innerHTML = recommendations.map(rec => `<li>${rec}</li>`).join('');
-    }
-
-    createImpactMeter(score) {
-        const canvas = document.getElementById('impactMeter');
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        canvas.width = 200;
-        canvas.height = 200;
-
-        const centerX = 100;
-        const centerY = 100;
-        const radius = 80;
-
-        // Clear canvas
-        ctx.clearRect(0, 0, 200, 200);
-
-        // Draw background circle
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-        ctx.strokeStyle = '#e0e0e0';
-        ctx.lineWidth = 20;
-        ctx.stroke();
-
-        // Draw score arc
-        const scoreAngle = (score / 10) * 2 * Math.PI;
-        const color = score < 3 ? '#34C759' : score < 7 ? '#FF9500' : '#FF3B30';
-        
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + scoreAngle);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 20;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-    }
-
-    exportCalculation() {
-        const activeTab = document.querySelector('.calc-tab.active');
-        if (!activeTab) return;
-
-        const data = {
-            type: activeTab.id.replace('-calc', ''),
-            timestamp: new Date().toISOString(),
-            data: this.carbonData
-        };
-
-        this.downloadJSON(data);
-    }
-
-    saveCalculation() {
-        const activeTab = document.querySelector('.calc-tab.active');
-        if (!activeTab) return;
-
-        // Save to localStorage
-        const calculations = JSON.parse(localStorage.getItem('climateCalculations') || '[]');
-        calculations.push({
-            id: Date.now(),
-            type: activeTab.id.replace('-calc', ''),
-            timestamp: new Date().toISOString(),
-            data: this.carbonData
-        });
-
-        localStorage.setItem('climateCalculations', JSON.stringify(calculations));
-        
-        // Show success message
-        this.showSaveSuccess();
-    }
-
-    shareCalculationResults() {
-        const data = this.carbonData.personal;
-        if (!data.total) return;
-
-        const text = `I just calculated my carbon footprint: ${data.total.toFixed(1)} tons CO₂e/year. Check out this climate visualization tool!`;
-        const url = window.location.href;
-
-        if (navigator.share) {
-            navigator.share({
-                title: 'My Carbon Footprint',
-                text: text,
-                url: url
-            });
-        } else {
-            // Fallback to clipboard
-            navigator.clipboard.writeText(`${text} ${url}`).then(() => {
-                alert('Results copied to clipboard!');
-            });
-        }
-    }
-
-    showSaveSuccess() {
-        // Create a temporary success message
-        const message = document.createElement('div');
-        message.textContent = '✅ Calculation saved successfully!';
-        message.style.cssText = `
+  showSaveSuccess() {
+    // Create a temporary success message
+    const message = document.createElement("div");
+    message.textContent = "✅ Calculation saved successfully!";
+    message.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
@@ -1608,15 +1811,15 @@ class ClimateUserTools {
             z-index: 1000;
             animation: slideIn 0.3s ease;
         `;
-        
-        document.body.appendChild(message);
-        setTimeout(() => message.remove(), 3000);
-    }
 
-    showExportError(errorMessage) {
-        const message = document.createElement('div');
-        message.textContent = `❌ ${errorMessage}`;
-        message.style.cssText = `
+    document.body.appendChild(message);
+    setTimeout(() => message.remove(), 3000);
+  }
+
+  showExportError(errorMessage) {
+    const message = document.createElement("div");
+    message.textContent = `❌ ${errorMessage}`;
+    message.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
@@ -1626,16 +1829,16 @@ class ClimateUserTools {
             border-radius: 12px;
             z-index: 1000;
         `;
-        
-        document.body.appendChild(message);
-        setTimeout(() => message.remove(), 5000);
-    }
 
-    destroy() {
-        // Cleanup event listeners and stored data
-        this.carbonData = { personal: {}, household: {}, business: {} };
-        this.comparisonData = [];
-    }
+    document.body.appendChild(message);
+    setTimeout(() => message.remove(), 5000);
+  }
+
+  destroy() {
+    // Cleanup event listeners and stored data
+    this.carbonData = { personal: {}, household: {}, business: {} };
+    this.comparisonData = [];
+  }
 }
 
 // Export for use in main app

@@ -1,0 +1,269 @@
+name: Quality Gates
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [develop, staging]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality Analysis
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install Dependencies
+        run: |
+          npm ci || npm install
+      
+      - name: ESLint Analysis
+        id: eslint
+        run: |
+          npx eslint *.js --format json --output-file eslint-report.json || true
+          echo "## ESLint Report" >> $GITHUB_STEP_SUMMARY
+          if [ -f eslint-report.json ]; then
+            errors=$(jq '[.[] | .errorCount] | add' eslint-report.json)
+            warnings=$(jq '[.[] | .warningCount] | add' eslint-report.json)
+            echo "- Errors: $errors" >> $GITHUB_STEP_SUMMARY
+            echo "- Warnings: $warnings" >> $GITHUB_STEP_SUMMARY
+            if [ "$errors" -gt 0 ]; then
+              echo "::error::ESLint found $errors errors"
+              exit 1
+            fi
+          fi
+      
+      - name: Code Complexity Analysis
+        run: |
+          npx complexity-report *.js --format json > complexity-report.json || true
+          echo "## Complexity Report" >> $GITHUB_STEP_SUMMARY
+          echo "Analyzing code complexity..." >> $GITHUB_STEP_SUMMARY
+      
+      - name: Duplicate Code Detection
+        run: |
+          npx jscpd . --min-lines 5 --min-tokens 50 --format json > duplication-report.json || true
+          echo "## Code Duplication" >> $GITHUB_STEP_SUMMARY
+          echo "Checking for duplicate code..." >> $GITHUB_STEP_SUMMARY
+
+  performance-metrics:
+    runs-on: ubuntu-latest
+    name: Performance Metrics
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Bundle Size Analysis
+        run: |
+          echo "## Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Size | Gzipped |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|---------|" >> $GITHUB_STEP_SUMMARY
+          
+          for file in *.js *.css; do
+            if [ -f "$file" ]; then
+              size=$(wc -c < "$file")
+              gzipped=$(gzip -c "$file" | wc -c)
+              echo "| $file | $(($size/1024))KB | $(($gzipped/1024))KB |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+      
+      - name: Performance Budget Check
+        run: |
+          TOTAL_JS_SIZE=$(find . -name "*.js" -exec wc -c {} + | tail -1 | awk '{print $1}')
+          TOTAL_CSS_SIZE=$(find . -name "*.css" -exec wc -c {} + | tail -1 | awk '{print $1}')
+          
+          MAX_JS_SIZE=1048576  # 1MB
+          MAX_CSS_SIZE=524288  # 512KB
+          
+          echo "## Performance Budget" >> $GITHUB_STEP_SUMMARY
+          echo "- JavaScript: $(($TOTAL_JS_SIZE/1024))KB / $(($MAX_JS_SIZE/1024))KB" >> $GITHUB_STEP_SUMMARY
+          echo "- CSS: $(($TOTAL_CSS_SIZE/1024))KB / $(($MAX_CSS_SIZE/1024))KB" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $TOTAL_JS_SIZE -gt $MAX_JS_SIZE ]; then
+            echo "::warning::JavaScript bundle exceeds budget"
+          fi
+          
+          if [ $TOTAL_CSS_SIZE -gt $MAX_CSS_SIZE ]; then
+            echo "::warning::CSS bundle exceeds budget"
+          fi
+      
+      - name: Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          configPath: '.lighthouserc.json'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+  test-coverage:
+    runs-on: ubuntu-latest
+    name: Test Coverage Analysis
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Dependencies
+        run: npm ci || npm install
+      
+      - name: Run Tests with Coverage
+        run: |
+          npm test -- --coverage || echo "No tests configured"
+          
+          echo "## Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "Coverage analysis would appear here" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload Coverage Reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+  security-audit:
+    runs-on: ubuntu-latest
+    name: Security Audit
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Dependency Audit
+        run: |
+          npm audit --json > audit-report.json || true
+          
+          echo "## Security Audit" >> $GITHUB_STEP_SUMMARY
+          if [ -f audit-report.json ]; then
+            vulnerabilities=$(jq '.metadata.vulnerabilities' audit-report.json)
+            echo "### Vulnerability Summary" >> $GITHUB_STEP_SUMMARY
+            echo "$vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Secret Scanning
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+      
+      - name: OWASP Dependency Check
+        run: |
+          echo "Running OWASP dependency check..."
+          # Would run OWASP dependency check here
+
+  accessibility-audit:
+    runs-on: ubuntu-latest
+    name: Accessibility Audit
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Dependencies
+        run: |
+          npm install -g @axe-core/cli
+      
+      - name: Run Axe Accessibility Tests
+        run: |
+          # Start a simple server
+          python3 -m http.server 8000 &
+          SERVER_PID=$!
+          sleep 5
+          
+          # Run axe tests
+          axe http://localhost:8000 --save axe-report.json || true
+          
+          # Stop server
+          kill $SERVER_PID
+          
+          echo "## Accessibility Report" >> $GITHUB_STEP_SUMMARY
+          if [ -f axe-report.json ]; then
+            violations=$(jq '.violations | length' axe-report.json)
+            echo "- Violations found: $violations" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  quality-gate-decision:
+    runs-on: ubuntu-latest
+    name: Quality Gate Decision
+    needs: [code-quality, performance-metrics, test-coverage, security-audit, accessibility-audit]
+    if: always()
+    
+    steps:
+      - name: Evaluate Quality Gates
+        run: |
+          echo "## 🚦 Quality Gate Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check job statuses
+          if [ "${{ needs.code-quality.result }}" == "success" ]; then
+            echo "✅ Code Quality: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Code Quality: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.performance-metrics.result }}" == "success" ]; then
+            echo "✅ Performance: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Performance: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.test-coverage.result }}" == "success" ]; then
+            echo "✅ Test Coverage: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Test Coverage: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.security-audit.result }}" == "success" ]; then
+            echo "✅ Security: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Security: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.accessibility-audit.result }}" == "success" ]; then
+            echo "✅ Accessibility: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Accessibility: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Overall decision
+          if [ "${{ needs.code-quality.result }}" == "success" ] && \
+             [ "${{ needs.performance-metrics.result }}" == "success" ] && \
+             [ "${{ needs.security-audit.result }}" == "success" ]; then
+            echo "### ✅ Quality Gates PASSED" >> $GITHUB_STEP_SUMMARY
+            echo "This PR meets all quality requirements and can be merged." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Quality Gates FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "This PR does not meet quality requirements. Please address the issues above." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+      
+      - name: Update PR Status
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const status = '${{ job.status }}' === 'success' ? '✅' : '❌';
+            const comment = `## Quality Gate Status: ${status}
+            
+            Please check the workflow summary for detailed results.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

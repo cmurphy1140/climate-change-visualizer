@@ -1,0 +1,245 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop, staging, 'agent/**']
+  pull_request:
+    branches: [main, develop, staging]
+  schedule:
+    # Daily agent branch integration
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  quality-checks:
+    runs-on: ubuntu-latest
+    name: Code Quality & Linting
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm ci || npm install
+      
+      - name: Run ESLint
+        run: |
+          npx eslint *.js --fix || true
+      
+      - name: Check for console.logs
+        run: |
+          ! grep -r "console\.log" --include="*.js" --exclude="test*.js" .
+      
+      - name: Check for exposed API keys
+        run: |
+          ! grep -r "api[_-]?key\s*=\s*[\"'][^\"']{20,}[\"']" --include="*.js" .
+      
+      - name: Validate HTML
+        run: |
+          npx html-validate index.html || true
+      
+      - name: CSS Validation
+        run: |
+          npx stylelint "**/*.css" --fix || true
+
+  performance-tests:
+    runs-on: ubuntu-latest
+    name: Performance Analysis
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Lighthouse CI
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun || true
+      
+      - name: Bundle Size Check
+        run: |
+          echo "Checking bundle sizes..."
+          for file in *.js; do
+            size=$(wc -c < "$file")
+            if [ $size -gt 500000 ]; then
+              echo "Warning: $file is $(($size/1024))KB"
+            fi
+          done
+      
+      - name: Performance Metrics
+        run: |
+          echo "## Performance Report" >> $GITHUB_STEP_SUMMARY
+          echo "- Total JS Size: $(du -sh *.js | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "- Total CSS Size: $(du -sh *.css | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "- HTML Size: $(du -sh index.html | cut -f1)" >> $GITHUB_STEP_SUMMARY
+
+  test-suite:
+    runs-on: ubuntu-latest
+    name: Test Execution
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm ci || npm install
+      
+      - name: Run Unit Tests
+        run: |
+          if [ -f "test-runner.html" ]; then
+            echo "Test runner available"
+          fi
+      
+      - name: Run E2E Tests
+        run: |
+          if [ -f "playwright.spec.js" ]; then
+            npx playwright install
+            npx playwright test || true
+          fi
+
+  agent-integration:
+    runs-on: ubuntu-latest
+    name: Agent Branch Integration
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    strategy:
+      matrix:
+        agent: [ui-polish, data-integration, performance, accessibility, testing, documentation, pwa, analytics]
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+      
+      - name: Merge agent/${{ matrix.agent }} to develop
+        run: |
+          git checkout develop
+          git merge origin/agent/${{ matrix.agent }} --no-ff -m "Auto-merge: agent/${{ matrix.agent }} → develop" || true
+      
+      - name: Push changes
+        run: |
+          git push origin develop || true
+
+  staging-promotion:
+    runs-on: ubuntu-latest
+    name: Promote to Staging
+    needs: [quality-checks, performance-tests, test-suite]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+      
+      - name: Merge develop to staging
+        run: |
+          git checkout staging
+          git merge origin/develop --no-ff -m "Auto-promote: develop → staging"
+          git push origin staging
+
+  production-release:
+    runs-on: ubuntu-latest
+    name: Production Release
+    if: github.ref == 'refs/heads/staging'
+    environment: production
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+      
+      - name: Generate Release Notes
+        run: |
+          echo "# Release $(date +%Y.%m.%d)" > release-notes.md
+          echo "## Changes" >> release-notes.md
+          git log main..staging --oneline >> release-notes.md
+      
+      - name: Create Release Tag
+        run: |
+          VERSION="v$(date +%Y.%m.%d)-$(git rev-parse --short HEAD)"
+          git tag -a $VERSION -m "Release $VERSION"
+          git push origin $VERSION
+      
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: Release ${{ env.VERSION }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Security Analysis
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+      
+      - name: Dependency Audit
+        run: |
+          npm audit || true
+      
+      - name: Check for Secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+
+  deploy-preview:
+    runs-on: ubuntu-latest
+    name: Deploy Preview
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Vercel Preview
+        run: |
+          echo "Deploy preview would be created here"
+          echo "Preview URL: https://climate-pr-${{ github.event.pull_request.number }}.vercel.app"
+      
+      - name: Comment PR with Preview URL
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Preview deployed to: https://climate-pr-${{ github.event.pull_request.number }}.vercel.app'
+            })

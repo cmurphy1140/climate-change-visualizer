@@ -1,37 +1,34 @@
 // Playwright Configuration
 
 module.exports = {
-  testDir: '.',
-  testMatch: '*.spec.js',
+  testDir: ".",
+  testMatch: "*.spec.js",
   timeout: 30000,
   retries: 1,
   workers: 2,
-  
+
   use: {
-    baseURL: 'http://localhost:8000',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    trace: 'on-first-retry',
+    baseURL: "http://localhost:8000",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
+    trace: "on-first-retry",
   },
 
   projects: [
     {
-      name: 'chromium',
-      use: { browserName: 'chromium' },
+      name: "chromium",
+      use: { browserName: "chromium" },
     },
     {
-      name: 'webkit',
-      use: { browserName: 'webkit' },
+      name: "webkit",
+      use: { browserName: "webkit" },
     },
   ],
 
-  reporter: [
-    ['html'],
-    ['line'],
-  ],
+  reporter: [["html"], ["line"]],
 
   webServer: {
-    command: 'python3 -m http.server 8000',
+    command: "python3 -m http.server 8000",
     port: 8000,
     reuseExistingServer: true,
   },
