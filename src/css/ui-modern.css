@@ -545,8 +545,8 @@
   background: var(--primary);
 }
 
-/* Light Theme Variables */
-.light-theme {
+/* Light Theme Variables - DISABLED to fix white background issue */
+.light-theme-disabled {
   --background: #ffffff;
   --surface: rgba(0, 0, 0, 0.03);
   --surface-elevated: rgba(0, 0, 0, 0.06);

@@ -1067,7 +1067,7 @@ class ClimateUserTools {
 
     // For demonstration, we'll create a data URL that could be processed
     // In a real implementation, you'd use a library like jsPDF or send to a server
-    console.log("PDF Report would be generated with:", reportContent);
+    // PDF Report would be generated with reportContent
 
     // Simulate PDF download
     const blob = new Blob([reportContent], { type: "text/html" });

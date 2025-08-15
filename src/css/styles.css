@@ -4,6 +4,23 @@
   box-sizing: border-box;
 }
 
+/* CRITICAL FIX: Force dark theme to prevent white background */
+html {
+  background: #000000 !important;
+  color: #f2f2f7 !important;
+}
+
+/* Ensure all text elements are readable */
+p, span, div, label, li, td, th, a, button, h1, h2, h3, h4, h5, h6 {
+  color: inherit;
+}
+
+/* Fix for any elements that might have white/light colors */
+.section, .card, .panel, .container {
+  background-color: transparent !important;
+  color: #f2f2f7 !important;
+}
+
 /* Form Elements for Tests */
 .form-group {
   margin-bottom: 1.5rem;
@@ -166,8 +183,9 @@ body {
     #1a1a2e 0%,
     #0f0f1e 50%,
     #000000 100%
-  );
-  color: #f2f2f7;
+  ) !important;
+  background-attachment: fixed !important;
+  color: #f2f2f7 !important;
   min-height: 100vh;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;

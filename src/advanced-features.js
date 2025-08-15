@@ -233,7 +233,7 @@ class AdvancedClimateFeatures {
   applyLocationFilter() {
     // Apply regional climate data adjustments
     const locationData = this.locationData[this.filters.location];
-    console.log(`Applying filter for ${locationData.name}`);
+    // Applying filter for locationData.name
 
     // Re-render charts with location-specific data
     this.applyTimelineFilter();
@@ -817,7 +817,7 @@ class AdvancedClimateFeatures {
     if (!this.globe) return;
 
     // Update globe visualization based on selected layer
-    console.log(`Updating globe layer: ${layer}`);
+    // Updating globe layer
     this.addClimateDataToGlobe(layer);
   }
 
